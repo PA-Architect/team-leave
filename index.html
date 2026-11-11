@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>팀 휴가 캘린더</title>
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#2754c5">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="휴가캘린더">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js"></script>
+<script>
+  // =================================================================
+  //  ▼ 설정: Supabase > Project Settings > API 에서 복사해 붙여넣기
+  //  (anon public key 는 공개되어도 안전한 키입니다. service_role 키는 절대 넣지 마세요.)
+  // =================================================================
+  window.TEAM_LEAVE_CONFIG = {
+    SUPABASE_URL: "https://otfggkzxspsvxljogwgj.supabase.co",
+    SUPABASE_ANON_KEY: "sb_publishable_hfmN0pqZmUOiwUYEX61NTw_cgnyS78Z",
+    TEAM_NAME: "설계2실"
+  };
+</script>
+<style>
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --sunk:#eef1f5; --line:#dde2ea; --fg:#18202c; --muted:#5d6878;
+  --accent:#2754c5; --accent-fg:#ffffff; --sun:#c8372d; --sat:#2754c5; --today:#fff4d6; --danger:#b42318; --warnbg:#fff1e6;
+  --m0:#2f6fdb; --m1:#d2671b; --m2:#178a6b; --m3:#b0368f; --m4:#7656d6; --m5:#a07a00; --m6:#c23b4a; --m7:#2b8fa8;
+  --font:"IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#11151b; --surface:#181d25; --sunk:#141920; --line:#2a313c; --fg:#e7ebf1; --muted:#98a2b2;
+  --accent:#7ea2ff; --accent-fg:#0d1320; --sun:#ff8a80; --sat:#8fb0ff; --today:#2e2914; --danger:#ff8a7a; --warnbg:#2b1d14;
+  --m0:#7ea2ff; --m1:#f29a55; --m2:#4fc9a3; --m3:#e77cc9; --m4:#a891ff; --m5:#e0bd45; --m6:#f07a88; --m7:#5cc5df;
+  color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:14px;line-height:1.5;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+[hidden]{display:none!important}
+.app{max-width:1240px;margin:0 auto;padding-block:20px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:16px}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em}
+h2{margin:0;font-size:15px;font-weight:600;text-wrap:balance}
+.status{margin:2px 0 0;color:var(--muted);font-size:13px}
+.status.warn{color:var(--danger)}
+.nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.month{min-width:120px;text-align:center;font-weight:600;font-size:17px;font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit;cursor:pointer}
+.icon,.ghost{background:var(--surface);border:1px solid var(--line);border-radius:8px;height:34px;padding:0 12px}
+.icon{width:34px;padding:0;font-size:18px;line-height:1}
+.icon:hover,.ghost:hover{border-color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible,.cell:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.userbar{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.userbar b{color:var(--fg);font-weight:600}
+.banner{display:flex;gap:10px;align-items:flex-start;justify-content:space-between;padding:10px 12px;border-radius:10px;background:var(--warnbg);font-size:13px}
+.banner p{margin:0}
+.banner button{background:none;border:0;color:var(--muted);font-size:13px;flex:none}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
+.cal{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0}
+.dow,.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.dow div{padding:8px 10px;font-size:12px;font-weight:600;color:var(--muted);border-bottom:1px solid var(--line);letter-spacing:.04em}
+.dow div:first-child{color:var(--sun)} .dow div:last-child{color:var(--sat)}
+.cell{min-height:108px;border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px;display:flex;flex-direction:column;gap:3px;min-width:0;background:var(--surface);text-align:left;border-radius:0}
+.cell:nth-child(7n){border-right:0}
+.cell.out{background:var(--sunk)} .cell.out .dnum{opacity:.45}
+.cell.today{background:var(--today)}
+.cell.sel{box-shadow:inset 0 0 0 2px var(--accent)}
+.dhead{display:flex;align-items:baseline;gap:6px;min-width:0}
+.dnum{font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums}
+.cell.sun .dnum,.cell.hol .dnum{color:var(--sun)} .cell.sat .dnum{color:var(--sat)}
+.hname{font-size:11px;color:var(--sun);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{display:flex;align-items:center;gap:5px;font-size:12px;line-height:1.35;padding:1px 6px;border-radius:4px;background:color-mix(in srgb,var(--c) 16%,var(--surface));min-width:0}
+.chip i{flex:none;width:7px;height:7px;border-radius:50%;background:var(--c)}
+.chip.half i{background:linear-gradient(90deg,var(--c) 50%,transparent 50%);box-shadow:inset 0 0 0 1px var(--c)}
+.chip span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip .t{color:var(--muted)}
+.more{font-size:11px;color:var(--muted);padding-left:4px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;padding:10px 12px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+.legend b{color:var(--fg);font-weight:500}
+.legend .k{display:inline-flex;align-items:center;gap:6px}
+.legend .k i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.legend .k i.h{background:linear-gradient(90deg,var(--muted) 50%,transparent 50%);box-shadow:inset 0 0 0 1px var(--muted)}
+.side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.panel h2 small{font-weight:400;color:var(--muted);font-size:12px;margin-left:6px}
+ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.item{display:flex;align-items:flex-start;gap:8px;padding:8px 10px;border-radius:8px;background:var(--sunk);min-width:0}
+.item i{flex:none;width:9px;height:9px;border-radius:50%;background:var(--c);margin-top:6px}
+.item .body{flex:1;min-width:0}
+.item .who{font-weight:600;margin-right:4px}
+.item .meta{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.item .tag{display:inline-block;font-size:11px;font-weight:600;padding:0 6px;border-radius:4px;border:1px solid var(--line);color:var(--muted)}
+.del{background:none;border:1px solid var(--line);border-radius:6px;font-size:12px;padding:2px 8px;color:var(--muted);flex:none}
+.del:hover,.del.arm{border-color:var(--danger);color:var(--danger)}
+.empty{color:var(--muted);font-size:13px}
+form{display:flex;flex-direction:column;gap:10px;margin:0}
+label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:500;color:var(--muted);min-width:0}
+input,select{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 9px;height:38px;width:100%;min-width:0}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.calc{margin:0;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.primary{background:var(--accent);color:var(--accent-fg);border:0;border-radius:8px;height:40px;font-weight:600;width:100%}
+.primary:disabled{opacity:.5;cursor:not-allowed}
+.msg{margin:0;font-size:12.5px;min-height:1em}
+.msg.err{color:var(--danger)}
+.msg.ok{color:var(--m2)}
+/* login */
+.gate{min-height:100vh;display:grid;place-items:center;padding-block:24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.card{width:100%;max-width:400px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:14px}
+.card .eyebrow{font-size:12px;font-weight:600;letter-spacing:.06em;color:var(--accent)}
+.card p{margin:0;color:var(--muted);font-size:13.5px}
+.card .fine{font-size:12px}
+.demo{font-size:12px;padding:8px 10px;border-radius:8px;background:var(--warnbg)}
+.linkbtn{background:none;border:0;color:var(--accent);padding:0;font-size:13px;text-decoration:underline;text-underline-offset:3px;align-self:flex-start}
+@media (max-width:900px){.layout{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:560px){
+  .cell{min-height:64px;padding:4px 3px}
+  .hname{display:none}
+  .chip{padding:0 3px;gap:3px;font-size:10.5px}
+  .chip .t{display:none}
+  .dow div{padding:6px 4px;text-align:center}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ① 로그인 화면 -->
+<section class="gate" id="vLogin" hidden>
+  <div class="card">
+    <span class="eyebrow" id="loginTeam">팀 휴가 캘린더</span>
+    <h1>로그인</h1>
+    <p>초대받은 이메일을 입력하면 로그인 링크를 보내드립니다. 비밀번호는 없습니다.</p>
+    <p class="demo" id="demoNote" hidden>데모 모드입니다. Supabase 설정 전이라 아무 이메일이나 넣으면 예시 화면으로 들어갑니다. 저장은 되지 않습니다.</p>
+    <form id="loginForm" novalidate>
+      <label for="email">이메일
+        <input type="email" id="email" autocomplete="email" inputmode="email" placeholder="name@company.com">
+      </label>
+      <button type="submit" class="primary" id="loginBtn">로그인 링크 받기</button>
+      <p class="msg" id="loginMsg" role="status"></p>
+    </form>
+    <p class="fine">메일의 링크를 한 번 누르면 이 기기에서는 계속 로그인 상태가 유지됩니다.</p>
+  </div>
+</section>
+
+<!-- ② 처음 한 번: 표시 이름 -->
+<section class="gate" id="vName" hidden>
+  <div class="card">
+    <span class="eyebrow">처음 오셨네요</span>
+    <h1>표시 이름 정하기</h1>
+    <p>팀원들이 캘린더에서 보게 될 이름입니다. 나중에 바꿀 수 있습니다.</p>
+    <form id="nameForm" novalidate>
+      <label for="nameInput">표시 이름
+        <input id="nameInput" maxlength="20" placeholder="예: 송대한 책임" autocomplete="name">
+      </label>
+      <button type="submit" class="primary">시작하기</button>
+      <p class="msg" id="nameMsg" role="status"></p>
+    </form>
+  </div>
+</section>
+
+<!-- ③ 캘린더 -->
+<div class="app" id="vApp" hidden>
+  <header class="top">
+    <div>
+      <h1 id="appTitle">팀 휴가 캘린더</h1>
+      <p id="status" class="status">일정을 불러오는 중입니다…</p>
+    </div>
+    <div class="nav">
+      <button class="icon" id="prev" aria-label="이전 달">‹</button>
+      <div class="month" id="monthLabel"></div>
+      <button class="icon" id="next" aria-label="다음 달">›</button>
+      <button class="ghost" id="todayBtn">오늘</button>
+    </div>
+  </header>
+
+  <div class="banner" id="installTip" hidden>
+    <p id="installText"></p>
+    <button type="button" id="installClose">닫기</button>
+  </div>
+
+  <div class="layout">
+    <section class="cal" aria-label="월간 달력">
+      <div class="dow"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
+      <div class="grid" id="grid"></div>
+      <div class="legend" id="legend"></div>
+    </section>
+
+    <aside class="side">
+      <section class="panel">
+        <h2 id="dayTitle"></h2>
+        <ul id="dayList"></ul>
+      </section>
+
+      <section class="panel">
+        <h2>내 휴가 등록</h2>
+        <form id="form" novalidate>
+          <label for="fType">구분
+            <select id="fType">
+              <option>연차</option><option>오전반차</option><option>오후반차</option>
+              <option>경조휴가</option><option>병가</option><option>교육·출장</option><option>기타</option>
+            </select>
+          </label>
+          <div class="row">
+            <label for="fStart">시작일<input type="date" id="fStart"></label>
+            <label for="fEnd">종료일<input type="date" id="fEnd"></label>
+          </div>
+          <label for="fMemo">메모 (선택)
+            <input id="fMemo" maxlength="60" placeholder="예: 가족여행 · 급한 건은 카톡" autocomplete="off">
+          </label>
+          <p class="calc" id="fCalc"></p>
+          <button type="submit" class="primary" id="fSubmit">등록하기</button>
+          <p class="msg" id="fMsg" role="status"></p>
+        </form>
+      </section>
+
+      <section class="panel">
+        <h2>내 등록 내역<small id="myTotal"></small></h2>
+        <ul id="myList"></ul>
+      </section>
+
+      <section class="panel">
+        <div class="userbar"><span><b id="meName"></b> 님으로 로그인됨</span></div>
+        <div class="nav">
+          <button class="ghost" id="renameBtn" type="button">이름 바꾸기</button>
+          <button class="ghost" id="logoutBtn" type="button">로그아웃</button>
+        </div>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ---------------- 공휴일 (참고용, 대체공휴일 포함) ----------------
+  const HOLIDAYS = {
+    "2026-01-01":"신정","2026-02-16":"설날 연휴","2026-02-17":"설날","2026-02-18":"설날 연휴","2026-03-01":"삼일절","2026-03-02":"대체공휴일",
+    "2026-05-05":"어린이날","2026-05-24":"부처님오신날","2026-05-25":"대체공휴일","2026-06-03":"지방선거","2026-06-06":"현충일",
+    "2026-08-15":"광복절","2026-08-17":"대체공휴일","2026-09-24":"추석 연휴","2026-09-25":"추석","2026-09-26":"추석 연휴",
+    "2026-10-03":"개천절","2026-10-05":"대체공휴일","2026-10-09":"한글날","2026-12-25":"성탄절",
+    "2027-01-01":"신정","2027-02-06":"설날 연휴","2027-02-07":"설날","2027-02-08":"설날 연휴","2027-02-09":"대체공휴일","2027-03-01":"삼일절",
+    "2027-05-05":"어린이날","2027-05-13":"부처님오신날","2027-06-06":"현충일","2027-08-15":"광복절","2027-08-16":"대체공휴일",
+    "2027-09-14":"추석 연휴","2027-09-15":"추석","2027-09-16":"추석 연휴","2027-10-03":"개천절","2027-10-04":"대체공휴일",
+    "2027-10-09":"한글날","2027-10-11":"대체공휴일","2027-12-25":"성탄절","2027-12-27":"대체공휴일"
+  };
+  const HALF = new Set(["오전반차","오후반차"]);
+  const COUNTED = new Set(["연차","오전반차","오후반차"]);
+  const CFG = window.TEAM_LEAVE_CONFIG || {};
+  const DEMO = !window.supabase || !/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(CFG.SUPABASE_URL||"") || /YOUR-/.test(CFG.SUPABASE_ANON_KEY||"YOUR-");
+
+  const $ = id => document.getElementById(id);
+  const pad = n => String(n).padStart(2,"0");
+  const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  const parse = s => { const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); };
+  const DOW = ["일","월","화","수","목","금","토"];
+  const fmt = s => { const d=parse(s); return `${d.getMonth()+1}/${d.getDate()}(${DOW[d.getDay()]})`; };
+  const isOff = s => { const g=parse(s).getDay(); return g===0||g===6||!!HOLIDAYS[s]; };
+  function workDays(start,end,type){
+    if (HALF.has(type)) return isOff(start)?0:0.5;
+    let n=0; for(let d=parse(start); ymd(d)<=end; d.setDate(d.getDate()+1)) if(!isOff(ymd(d))) n++;
+    return n;
+  }
+  function colorIdx(id){ let h=0; for(const c of String(id)) h=(h*31+c.charCodeAt(0))>>>0; return h%8; }
+  const store = { get(k){ try{return localStorage.getItem(k);}catch{return null;} }, set(k,v){ try{localStorage.setItem(k,v);}catch{} } };
+
+  function show(view){ for(const v of ["vLogin","vName","vApp"]) $(v).hidden = v!==view; }
+  function msg(el,t,kind){ el.textContent=t||""; el.className="msg"+(kind?" "+kind:""); }
+
+  // =====================================================================
+  //  데이터 계층: Supabase (실제) / Demo (설정 전 미리보기)
+  // =====================================================================
+  function makeSupabase(){
+    const sb = window.supabase.createClient(CFG.SUPABASE_URL, CFG.SUPABASE_ANON_KEY, {
+      auth:{ persistSession:true, autoRefreshToken:true, detectSessionInUrl:true, flowType:"implicit", storageKey:"team-leave-auth" }
+    });
+    return {
+      async session(){ const {data}=await sb.auth.getSession(); return data.session?.user||null; },
+      onAuth(cb){ sb.auth.onAuthStateChange((ev,s)=>cb(ev,s?.user||null)); },
+      async sendLink(email){
+        const {error}=await sb.auth.signInWithOtp({email, options:{shouldCreateUser:false, emailRedirectTo: location.origin+location.pathname}});
+        if(!error) return {ok:true};
+        const m=(error.message||"").toLowerCase();
+        if(error.status===429||m.includes("rate")) return {ok:false, reason:"rate"};
+        if(m.includes("signup")||m.includes("not allowed")||m.includes("not found")||error.status===422||error.status===400) return {ok:false, reason:"notInvited"};
+        return {ok:false, reason:"other", detail:error.message};
+      },
+      async signOut(){ await sb.auth.signOut(); },
+      async myName(uid){ const {data}=await sb.from("members").select("display_name").eq("id",uid).maybeSingle(); return data?.display_name||""; },
+      async saveName(uid,name){ const {error}=await sb.from("members").upsert({id:uid, display_name:name}); if(error) throw error; },
+      async isAdmin(){ const {data,error}=await sb.rpc("is_admin"); return !error && data===true; },
+      async load(){
+        const since = `${new Date().getFullYear()-1}-01-01`;
+        const [m,l]=await Promise.all([
+          sb.from("members").select("id,display_name"),
+          sb.from("leaves").select("id,user_id,type,start_date,end_date,memo").gte("end_date",since).order("start_date")
+        ]);
+        if(m.error) throw m.error; if(l.error) throw l.error;
+        return {members:m.data, leaves:l.data};
+      },
+      async add(row){ const {error}=await sb.from("leaves").insert(row); if(error) throw error; },
+      async del(id){ const {data,error}=await sb.from("leaves").delete().eq("id",id).select("id"); if(error) throw error; return (data||[]).length>0; },
+      live(cb){
+        let t; const fire=()=>{ clearTimeout(t); t=setTimeout(cb,250); };
+        sb.channel("team-leave")
+          .on("postgres_changes",{event:"*",schema:"public",table:"leaves"},fire)
+          .on("postgres_changes",{event:"*",schema:"public",table:"members"},fire)
+          .subscribe();
+        document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") fire(); });
+      }
+    };
+  }
+
+  function makeDemo(){
+    const t=new Date(); const y=t.getFullYear(), m=t.getMonth();
+    const d=(day)=>ymd(new Date(y,m,day));
+    const members=[{id:"demo-me",display_name:""},{id:"demo-a",display_name:"(예시) 김설계"},{id:"demo-b",display_name:"(예시) 이구조"},{id:"demo-c",display_name:"(예시) 박인허"}];
+    let leaves=[
+      {id:"x1",user_id:"demo-a",type:"연차",start_date:d(6),end_date:d(8),memo:"가족여행"},
+      {id:"x2",user_id:"demo-b",type:"오후반차",start_date:d(12),end_date:d(12),memo:""},
+      {id:"x3",user_id:"demo-c",type:"교육·출장",start_date:d(17),end_date:d(18),memo:"인허가 협의 출장"},
+      {id:"x4",user_id:"demo-a",type:"오전반차",start_date:d(17),end_date:d(17),memo:""},
+      {id:"x5",user_id:"demo-b",type:"연차",start_date:d(24),end_date:d(26),memo:""}
+    ];
+    let user=null, cb=null;
+    return {
+      async session(){ return user; },
+      onAuth(f){ cb=f; },
+      async sendLink(email){ user={id:"demo-me",email}; setTimeout(()=>cb&&cb("SIGNED_IN",user),300); return {ok:true, demo:true}; },
+      async signOut(){ user=null; cb&&cb("SIGNED_OUT",null); },
+      async myName(){ return members[0].display_name; },
+      async saveName(uid,name){ members[0].display_name=name; },
+      async isAdmin(){ return false; },
+      async load(){ return {members:members.map(x=>({...x})), leaves:leaves.map(x=>({...x}))}; },
+      async add(row){ leaves.push({id:"n"+Date.now(), user_id:"demo-me", memo:"", ...row}); },
+      async del(id){ const r=leaves.find(x=>x.id===id); if(!r||r.user_id!=="demo-me") return false; leaves=leaves.filter(x=>x.id!==id); return true; },
+      live(){}
+    };
+  }
+
+  const api = DEMO ? makeDemo() : makeSupabase();
+
+  // =====================================================================
+  //  상태 & 렌더링
+  // =====================================================================
+  const today = ymd(new Date());
+  let view=new Date(); view.setDate(1);
+  let selected=today, me=null, myName="", admin=false, members={}, leaves=[], started=false;
+
+  function entries(){
+    return leaves.map(r=>({id:r.id, uid:r.user_id, type:r.type, start:r.start_date, end:r.end_date, memo:r.memo||"",
+      who:(members[r.user_id]||"이름 미설정"), c:`var(--m${colorIdx(r.user_id)})`}))
+      .sort((a,b)=>a.start<b.start?-1:a.start>b.start?1:a.who.localeCompare(b.who,"ko"));
+  }
+  const onDay=(list,s)=>list.filter(e=>e.start<=s&&s<=e.end&&(!isOff(s)||e.start===e.end));
+
+  function render(){
+    const list=entries();
+    const y=view.getFullYear(), m=view.getMonth();
+    $("monthLabel").textContent=`${y}년 ${m+1}월`;
+    const first=new Date(y,m,1), start=new Date(first); start.setDate(1-first.getDay());
+    const weeks=Math.ceil((first.getDay()+new Date(y,m+1,0).getDate())/7);
+    const narrow=matchMedia("(max-width:560px)").matches;
+    const grid=$("grid"); grid.replaceChildren();
+    for(let i=0;i<weeks*7;i++){
+      const d=new Date(start); d.setDate(start.getDate()+i); const s=ymd(d);
+      const cell=document.createElement("button"); cell.type="button"; cell.className="cell";
+      if(d.getMonth()!==m) cell.classList.add("out");
+      if(d.getDay()===0) cell.classList.add("sun"); if(d.getDay()===6) cell.classList.add("sat");
+      if(HOLIDAYS[s]) cell.classList.add("hol"); if(s===today) cell.classList.add("today"); if(s===selected) cell.classList.add("sel");
+      const head=document.createElement("div"); head.className="dhead";
+      const num=document.createElement("span"); num.className="dnum"; num.textContent=d.getDate(); head.append(num);
+      if(HOLIDAYS[s]){ const h=document.createElement("span"); h.className="hname"; h.textContent=HOLIDAYS[s]; head.append(h); }
+      cell.append(head);
+      const es=onDay(list,s), max=narrow?2:3;
+      for(const e of es.slice(0,max)){
+        const c=document.createElement("div"); c.className="chip"+(HALF.has(e.type)?" half":""); c.style.setProperty("--c",e.c);
+        const dot=document.createElement("i"); const w=document.createElement("span"); w.textContent=e.who;
+        const t=document.createElement("span"); t.className="t"; t.textContent=e.type;
+        c.append(dot,w,t); cell.append(c);
+      }
+      if(es.length>max){ const mo=document.createElement("div"); mo.className="more"; mo.textContent=`+${es.length-max}명`; cell.append(mo); }
+      cell.setAttribute("aria-label",`${d.getMonth()+1}월 ${d.getDate()}일${HOLIDAYS[s]?" "+HOLIDAYS[s]:""}, 휴가 ${es.length}건`);
+      cell.addEventListener("click",()=>{ selected=s; $("fStart").value=s; if(!$("fEnd").value||$("fEnd").value<s) $("fEnd").value=s; calc(); render(); });
+      grid.append(cell);
+    }
+    renderLegend(list,y,m); renderDay(list); renderMine(list);
+  }
+
+  function renderLegend(list,y,m){
+    const lg=$("legend"); lg.replaceChildren();
+    const mk=`${y}-${pad(m+1)}`, cnt={};
+    for(const e of list){ let n=0; for(let d=parse(e.start); ymd(d)<=e.end; d.setDate(d.getDate()+1)){ const s=ymd(d); if(s.startsWith(mk)&&!isOff(s)) n+=HALF.has(e.type)?0.5:1; } if(n) cnt[e.uid]=(cnt[e.uid]||0)+n; }
+    const ids=Object.keys(members).filter(id=>members[id]).sort((a,b)=>members[a].localeCompare(members[b],"ko"));
+    if(!ids.length){ lg.textContent="팀원이 처음 로그인하면 이름과 색상이 여기에 표시됩니다."; return; }
+    for(const id of ids){
+      const k=document.createElement("span"); k.className="k"; k.style.setProperty("--c",`var(--m${colorIdx(id)})`);
+      const i=document.createElement("i"); const b=document.createElement("b"); b.textContent=members[id];
+      k.append(i,b,document.createTextNode(cnt[id]?` ${cnt[id]}일`:" -")); lg.append(k);
+    }
+    const h=document.createElement("span"); h.className="k"; const hi=document.createElement("i"); hi.className="h"; h.append(hi,document.createTextNode("반차")); lg.append(h);
+  }
+
+  function item(e,{showWho=true,deletable=false}={}){
+    const li=document.createElement("li"); li.className="item"; li.style.setProperty("--c",e.c);
+    const dot=document.createElement("i"); const body=document.createElement("div"); body.className="body";
+    const top=document.createElement("div");
+    if(showWho){ const w=document.createElement("span"); w.className="who"; w.textContent=e.who; top.append(w); }
+    const tg=document.createElement("span"); tg.className="tag"; tg.textContent=e.type; top.append(tg);
+    const meta=document.createElement("div"); meta.className="meta";
+    meta.textContent=(e.start===e.end?fmt(e.start):`${fmt(e.start)} ~ ${fmt(e.end)}`)+` · ${workDays(e.start,e.end,e.type)}일`+(e.memo?` · ${e.memo}`:"");
+    body.append(top,meta); li.append(dot,body);
+    if(deletable){
+      const del=document.createElement("button"); del.type="button"; del.className="del"; del.textContent="삭제";
+      del.addEventListener("click",async()=>{
+        if(!del.classList.contains("arm")){ del.classList.add("arm"); del.textContent="삭제 확인"; setTimeout(()=>{ del.classList.remove("arm"); del.textContent="삭제"; },3000); return; }
+        del.disabled=true;
+        try{ const ok=await api.del(e.id); msg($("fMsg"), ok?"삭제했습니다.":"이 일정을 삭제할 권한이 없습니다.", ok?"ok":"err"); await refresh(); }
+        catch{ msg($("fMsg"),"삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.","err"); del.disabled=false; }
+      });
+      li.append(del);
+    }
+    return li;
+  }
+
+  function renderDay(list){
+    const d=parse(selected);
+    $("dayTitle").textContent=`${d.getMonth()+1}월 ${d.getDate()}일 (${DOW[d.getDay()]})${HOLIDAYS[selected]?" · "+HOLIDAYS[selected]:""} 부재자`;
+    const ul=$("dayList"); ul.replaceChildren();
+    const es=onDay(list,selected);
+    if(!es.length){ const li=document.createElement("li"); li.className="empty"; li.textContent=isOff(selected)?"휴무일입니다.":"이 날은 모두 출근입니다."; ul.append(li); return; }
+    es.forEach(e=>ul.append(item(e,{deletable: e.uid===me?.id || admin})));
+  }
+
+  function renderMine(list){
+    const ul=$("myList"); ul.replaceChildren();
+    const mine=list.filter(e=>e.uid===me?.id);
+    const yr=String(new Date().getFullYear());
+    const used=mine.filter(e=>COUNTED.has(e.type)&&e.start.startsWith(yr)).reduce((a,e)=>a+workDays(e.start,e.end,e.type),0);
+    $("myTotal").textContent=mine.length?`${yr}년 연차 사용 ${used}일`:"";
+    if(!mine.length){ const li=document.createElement("li"); li.className="empty"; li.textContent="아직 등록한 휴가가 없습니다. 달력에서 날짜를 누르고 등록해 보세요."; ul.append(li); return; }
+    mine.forEach(e=>ul.append(item(e,{showWho:false,deletable:true})));
+  }
+
+  function status(t,warn){ const s=$("status"); s.textContent=t; s.classList.toggle("warn",!!warn); }
+
+  async function refresh(){
+    try{
+      const data=await api.load();
+      members={}; for(const m of data.members) members[m.id]=m.display_name;
+      leaves=data.leaves;
+      const n=new Set(leaves.map(l=>l.user_id)).size;
+      status(`${DEMO?"데모 모드 · 저장되지 않음 · ":""}팀원 ${Object.keys(members).filter(k=>members[k]).length}명 · 휴가 등록자 ${n}명${admin?" · 관리자: 모든 일정 삭제 가능":""}`, DEMO);
+      render();
+    }catch(e){
+      status("일정을 불러오지 못했습니다. 인터넷 연결을 확인하고 새로고침해 주세요.",true);
+    }
+  }
+
+  // ---------------- 휴가 등록 ----------------
+  function calc(){
+    const t=$("fType").value, s=$("fStart").value; let e=$("fEnd").value;
+    if(HALF.has(t)&&s){ $("fEnd").value=s; e=s; }
+    $("fEnd").disabled=HALF.has(t);
+    $("fCalc").textContent=(s&&e&&e>=s)?`차감 기준 ${workDays(s,e,t)}일 (주말·공휴일 제외)`:"";
+  }
+  ["fType","fStart","fEnd"].forEach(id=>$(id).addEventListener("change",calc));
+
+  $("form").addEventListener("submit",async ev=>{
+    ev.preventDefault();
+    const type=$("fType").value, start=$("fStart").value, memo=$("fMemo").value.trim();
+    const end=HALF.has(type)?start:$("fEnd").value;
+    const out=$("fMsg");
+    if(!start||!end) return msg(out,"시작일과 종료일을 선택하세요.","err");
+    if(end<start) return msg(out,"종료일이 시작일보다 빠릅니다.","err");
+    if(leaves.some(l=>l.user_id===me.id && l.start_date<=end && start<=l.end_date)) return msg(out,"이미 등록한 휴가와 날짜가 겹칩니다. 기존 건을 삭제한 뒤 다시 등록하세요.","err");
+    $("fSubmit").disabled=true; msg(out,"저장 중…");
+    try{
+      await api.add({type, start_date:start, end_date:end, memo:memo||null});
+      msg(out,`${fmt(start)}${start!==end?" ~ "+fmt(end):""} ${type} 등록 완료`,"ok"); $("fMemo").value="";
+      await refresh();
+    }catch(e){ msg(out,"저장하지 못했습니다. 로그인이 풀렸다면 새로고침 후 다시 시도해 주세요.","err"); }
+    finally{ $("fSubmit").disabled=false; }
+  });
+
+  // ---------------- 화면 전환 ----------------
+  $("prev").onclick=()=>{ view.setMonth(view.getMonth()-1); render(); };
+  $("next").onclick=()=>{ view.setMonth(view.getMonth()+1); render(); };
+  $("todayBtn").onclick=()=>{ view=new Date(); view.setDate(1); selected=today; render(); };
+  matchMedia("(max-width:560px)").addEventListener("change",()=>{ if(started) render(); });
+
+  function installTip(){
+    const standalone=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
+    if(standalone||store.get("tl-tip-closed")) return;
+    const ua=navigator.userAgent;
+    $("installText").textContent = /iPhone|iPad/.test(ua) ? "다음부터 바로 열려면: 사파리 아래 공유 버튼 → '홈 화면에 추가'. 로그인 상태는 유지됩니다."
+      : /Android/.test(ua) ? "다음부터 바로 열려면: 크롬 메뉴(⋮) → '홈 화면에 추가'. 로그인 상태는 유지됩니다."
+      : "다음부터 바로 열려면 이 페이지를 즐겨찾기하세요 (Ctrl+D, 맥은 ⌘+D). 로그인 상태는 유지됩니다.";
+    $("installTip").hidden=false;
+  }
+  $("installClose").onclick=()=>{ $("installTip").hidden=true; store.set("tl-tip-closed","1"); };
+
+  async function enter(user){
+    me=user;
+    myName=await api.myName(user.id).catch(()=>"");
+    if(!myName){ show("vName"); $("nameInput").focus(); return; }
+    $("meName").textContent=myName;
+    show("vApp");
+    if(!started){
+      started=true;
+      $("fStart").value=today; $("fEnd").value=today; calc();
+      admin=await api.isAdmin().catch(()=>false);
+      api.live(refresh);
+      installTip();
+    }
+    await refresh();
+  }
+
+  $("nameForm").addEventListener("submit",async ev=>{
+    ev.preventDefault();
+    const n=$("nameInput").value.trim();
+    if(!n) return msg($("nameMsg"),"이름을 입력하세요.","err");
+    try{ await api.saveName(me.id,n); await enter(me); }
+    catch{ msg($("nameMsg"),"저장하지 못했습니다. 잠시 후 다시 시도해 주세요.","err"); }
+  });
+  $("renameBtn").onclick=()=>{ $("nameInput").value=myName; show("vName"); };
+  $("logoutBtn").onclick=async()=>{ await api.signOut(); };
+
+  $("loginForm").addEventListener("submit",async ev=>{
+    ev.preventDefault();
+    const email=$("email").value.trim(), out=$("loginMsg");
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return msg(out,"이메일 주소를 정확히 입력하세요.","err");
+    $("loginBtn").disabled=true; msg(out,"보내는 중…");
+    const r=await api.sendLink(email).catch(()=>({ok:false,reason:"other"}));
+    $("loginBtn").disabled=false;
+    if(r.ok) return msg(out, r.demo?"데모 모드로 들어갑니다…":`${email} 로 로그인 링크를 보냈습니다. 메일함(스팸함 포함)을 확인하고 링크를 눌러 주세요.`,"ok");
+    if(r.reason==="notInvited") return msg(out,"초대받지 않은 이메일입니다. 관리자에게 초대를 요청하세요.","err");
+    if(r.reason==="rate") return msg(out,"메일 요청이 너무 잦습니다. 1~2분 뒤 다시 시도해 주세요.","err");
+    msg(out,"메일을 보내지 못했습니다. 잠시 후 다시 시도해 주세요.","err");
+  });
+
+  // ---------------- 시작 ----------------
+  (async()=>{
+    if(CFG.TEAM_NAME){ $("loginTeam").textContent=`${CFG.TEAM_NAME} · 팀 휴가 캘린더`; $("appTitle").textContent=`${CFG.TEAM_NAME} 휴가 캘린더`; document.title=`${CFG.TEAM_NAME} 휴가 캘린더`; }
+    $("demoNote").hidden=!DEMO;
+    // 메일 링크가 만료됐을 때 Supabase가 주소에 붙여주는 오류 처리
+    const hp=new URLSearchParams(location.hash.slice(1)+"&"+location.search.slice(1));
+    const linkErr=hp.get("error_description")||hp.get("error");
+    if(linkErr){ history.replaceState(null,"",location.pathname); }
+    api.onAuth((ev,user)=>{
+      if(ev==="SIGNED_OUT"){ me=null; show("vLogin"); return; }
+      if(user && !me && (ev==="SIGNED_IN"||ev==="INITIAL_SESSION")) enter(user);
+    });
+    const user=await api.session();
+    if(user){ if(!me) enter(user); }
+    else{
+      show("vLogin");
+      if(linkErr) msg($("loginMsg"),"메일 링크가 만료되었거나 이미 사용되었습니다. 이메일을 입력해 새 링크를 받아 주세요.","err");
+    }
+  })();
+})();
+</script>
+</body>
+</html>
