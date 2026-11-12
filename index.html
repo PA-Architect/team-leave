@@ -122,6 +122,35 @@ input,select{font:inherit;color:var(--fg);background:var(--surface);border:1px s
   .chip .t{display:none}
   .dow div{padding:6px 4px;text-align:center}
 }
+/* widget mode */
+.wg{max-width:420px;margin:0 auto;padding-block:12px 16px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:10px}
+.wg-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.wg-top b{font-size:15px}
+.wg-top .d{color:var(--muted);font-size:12px;margin-left:6px;font-variant-numeric:tabular-nums}
+.wg-open{font-size:12px;color:var(--accent);text-decoration:none;white-space:nowrap}
+.wg-open:hover{text-decoration:underline}
+.wg-sec{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.wg-sec h3{margin:0;font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.02em}
+.wg-list{gap:4px}
+.wg-list li{display:flex;align-items:baseline;gap:6px;font-size:13px;min-width:0}
+.wg-list li i{flex:none;width:8px;height:8px;border-radius:50%;background:var(--c);transform:translateY(-1px)}
+.wg-list li .t{color:var(--muted);font-size:12px}
+.wg-list li .dt{flex:none;width:62px;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.wg-list li .nm{min-width:0;overflow-wrap:anywhere}
+.wg-mhead{display:flex;align-items:center;justify-content:space-between}
+.wg-mhead span{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
+.wg-mhead button{background:none;border:1px solid var(--line);border-radius:6px;width:26px;height:24px;line-height:1}
+.wg-dow,.wg-grid{display:grid;grid-template-columns:repeat(7,1fr);text-align:center}
+.wg-dow div{font-size:11px;color:var(--muted)}
+.wg-dow div:first-child,.wg-grid .sun,.wg-grid .hol{color:var(--sun)} .wg-dow div:last-child,.wg-grid .sat{color:var(--sat)}
+.wg-grid button{background:none;border:0;border-radius:6px;padding:3px 0 5px;font-family:var(--mono);font-size:12px;position:relative;font-variant-numeric:tabular-nums}
+.wg-grid button.out{opacity:.35}
+.wg-grid button.today{background:var(--today)}
+.wg-grid button.sel{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.wg-grid button.has::after{content:"";position:absolute;left:50%;bottom:1px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--accent)}
+.wg-foot{margin:0;font-size:11px;color:var(--muted);text-align:center}
+body.widget .card{padding:18px;gap:10px}
+body.widget .gate{padding-block:12px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
@@ -260,6 +289,28 @@ input,select{font:inherit;color:var(--fg);background:var(--surface);border:1px s
   </div>
 </div>
 
+<!-- ④ 위젯 모드 (?widget) -->
+<div class="wg" id="vWidget" hidden>
+  <header class="wg-top">
+    <div><b id="wgTitle">휴가 현황</b><span class="d" id="wgToday"></span></div>
+    <a class="wg-open" href="./" target="_blank" rel="noopener">전체 캘린더 ↗</a>
+  </header>
+  <section class="wg-sec">
+    <h3 id="wgDayTitle">오늘 부재자</h3>
+    <ul class="wg-list" id="wgDay"></ul>
+  </section>
+  <section class="wg-sec">
+    <h3>다가오는 휴가 (다음 주까지)</h3>
+    <ul class="wg-list" id="wgNext"></ul>
+  </section>
+  <section class="wg-sec">
+    <div class="wg-mhead"><button type="button" id="wgPrev" aria-label="이전 달">‹</button><span id="wgMonth"></span><button type="button" id="wgFwd" aria-label="다음 달">›</button></div>
+    <div class="wg-dow"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
+    <div class="wg-grid" id="wgGrid"></div>
+  </section>
+  <p class="wg-foot" id="wgStatus"></p>
+</div>
+
 <script>
 (() => {
   // ---------------- 공휴일 (참고용, 대체공휴일 포함) ----------------
@@ -277,6 +328,8 @@ input,select{font:inherit;color:var(--fg);background:var(--surface);border:1px s
   const COUNTED = new Set(["연차","오전반차","오후반차"]);
   const CFG = window.TEAM_LEAVE_CONFIG || {};
   const DEMO = !window.supabase || !/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(CFG.SUPABASE_URL||"") || /YOUR-/.test(CFG.SUPABASE_ANON_KEY||"YOUR-");
+  const WIDGET = /(^|[?&])widget\b/.test(location.search.slice(1)) || location.hash==="#widget";
+  if(WIDGET) document.body.classList.add("widget");
 
   const $ = id => document.getElementById(id);
   const pad = n => String(n).padStart(2,"0");
@@ -293,7 +346,7 @@ input,select{font:inherit;color:var(--fg);background:var(--surface);border:1px s
   function colorIdx(id){ let h=0; for(const c of String(id)) h=(h*31+c.charCodeAt(0))>>>0; return h%8; }
   const store = { get(k){ try{return localStorage.getItem(k);}catch{return null;} }, set(k,v){ try{localStorage.setItem(k,v);}catch{} } };
 
-  function show(view){ for(const v of ["vLogin","vName","vApp"]) $(v).hidden = v!==view; }
+  function show(view){ if(view==="vApp"&&WIDGET) view="vWidget"; for(const v of ["vLogin","vName","vApp","vWidget"]) $(v).hidden = v!==view; }
   function msg(el,t,kind){ el.textContent=t||""; el.className="msg"+(kind?" "+kind:""); }
 
   // =====================================================================
@@ -394,7 +447,7 @@ input,select{font:inherit;color:var(--fg);background:var(--surface);border:1px s
   // =====================================================================
   //  상태 & 렌더링
   // =====================================================================
-  const today = ymd(new Date());
+  let today = ymd(new Date());
   let view=new Date(); view.setDate(1);
   let selected=today, me=null, myName="", admin=false, members={}, leaves=[], started=false;
 
@@ -495,6 +548,61 @@ input,select{font:inherit;color:var(--fg);background:var(--surface);border:1px s
 
   function status(t,warn){ const s=$("status"); s.textContent=t; s.classList.toggle("warn",!!warn); }
 
+  // ---------------- 위젯 모드 ----------------
+  let wgView=new Date(); wgView.setDate(1); let wgSel=null;
+  function wgItem(e,withDate){
+    const li=document.createElement("li"); li.style.setProperty("--c",e.c);
+    li.append(document.createElement("i"));
+    const nm=document.createElement("span"); nm.className="nm"; nm.textContent=e.who; li.append(nm);
+    const t=document.createElement("span"); t.className="t"; t.textContent=e.type+(e.memo?` · ${e.memo}`:""); li.append(t);
+    return li;
+  }
+  function renderWidget(list){
+    const sel=wgSel||today, d0=parse(today);
+    $("wgToday").textContent=`${d0.getMonth()+1}/${d0.getDate()}(${DOW[d0.getDay()]})`;
+    // 선택한 날(기본 오늘) 부재자
+    const sd=parse(sel);
+    $("wgDayTitle").textContent = sel===today ? "오늘 부재자" : `${sd.getMonth()+1}/${sd.getDate()}(${DOW[sd.getDay()]}) 부재자`;
+    const ul=$("wgDay"); ul.replaceChildren();
+    const es=onDay(list,sel);
+    if(!es.length){ const li=document.createElement("li"); li.className="t"; li.textContent=isOff(sel)?(HOLIDAYS[sel]||"휴무일")+"입니다.":"모두 출근합니다."; ul.append(li); }
+    else es.forEach(e=>ul.append(wgItem(e)));
+    // 내일 ~ 다음 주 일요일
+    const nx=$("wgNext"); nx.replaceChildren();
+    const end=parse(today); end.setDate(end.getDate()+(7-end.getDay())+7);
+    let cnt=0;
+    for(let d=parse(today); d.setDate(d.getDate()+1), d<=end;){
+      const s=ymd(d); if(isOff(s)) continue;
+      const day=onDay(list,s); if(!day.length) continue;
+      const li=document.createElement("li");
+      const dt=document.createElement("span"); dt.className="dt"; dt.textContent=`${d.getMonth()+1}/${d.getDate()}(${DOW[d.getDay()]})`;
+      const nm=document.createElement("span"); nm.className="nm"; nm.textContent=day.map(e=>`${e.who}${e.type==="연차"?"":"("+e.type+")"}`).join(", ");
+      li.append(dt,nm); nx.append(li); cnt++;
+    }
+    if(!cnt){ const li=document.createElement("li"); li.className="t"; li.textContent="다음 주까지 예정된 휴가가 없습니다."; nx.append(li); }
+    // 미니 달력
+    const y=wgView.getFullYear(), m=wgView.getMonth();
+    $("wgMonth").textContent=`${y}년 ${m+1}월`;
+    const first=new Date(y,m,1), start=new Date(first); start.setDate(1-first.getDay());
+    const weeks=Math.ceil((first.getDay()+new Date(y,m+1,0).getDate())/7);
+    const g=$("wgGrid"); g.replaceChildren();
+    for(let i=0;i<weeks*7;i++){
+      const d=new Date(start); d.setDate(start.getDate()+i); const s=ymd(d);
+      const b=document.createElement("button"); b.type="button"; b.textContent=d.getDate();
+      if(d.getMonth()!==m) b.classList.add("out");
+      if(d.getDay()===0) b.classList.add("sun"); if(d.getDay()===6) b.classList.add("sat"); if(HOLIDAYS[s]) b.classList.add("hol");
+      if(s===today) b.classList.add("today"); if(s===sel) b.classList.add("sel");
+      const n=onDay(list,s).length; if(n) b.classList.add("has");
+      b.title=`${d.getMonth()+1}/${d.getDate()}${HOLIDAYS[s]?" "+HOLIDAYS[s]:""} · 부재 ${n}명`;
+      b.addEventListener("click",()=>{ wgSel = s===today?null:s; renderWidget(entries()); });
+      g.append(b);
+    }
+    const now=new Date();
+    $("wgStatus").textContent=`${pad(now.getHours())}:${pad(now.getMinutes())} 기준 · 변경 시 자동 반영${DEMO?" · 데모":""}`;
+  }
+  $("wgPrev").onclick=()=>{ wgView.setMonth(wgView.getMonth()-1); renderWidget(entries()); };
+  $("wgFwd").onclick=()=>{ wgView.setMonth(wgView.getMonth()+1); renderWidget(entries()); };
+
   async function refresh(){
     try{
       const data=await api.load();
@@ -502,8 +610,11 @@ input,select{font:inherit;color:var(--fg);background:var(--surface);border:1px s
       leaves=data.leaves;
       const n=new Set(leaves.map(l=>l.user_id)).size;
       status(`${DEMO?"데모 모드 · 저장되지 않음 · ":""}팀원 ${Object.keys(members).filter(k=>members[k]).length}명 · 휴가 등록자 ${n}명${admin?" · 관리자: 모든 일정 삭제 가능":""}`, DEMO);
+      today = ymd(new Date());
       render();
+      if(WIDGET) renderWidget(entries());
     }catch(e){
+      if(WIDGET) $("wgStatus").textContent="일정을 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.";
       status("일정을 불러오지 못했습니다. 인터넷 연결을 확인하고 새로고침해 주세요.",true);
     }
   }
@@ -583,7 +694,8 @@ input,select{font:inherit;color:var(--fg);background:var(--surface);border:1px s
       $("fStart").value=today; $("fEnd").value=today; calc();
       admin=await api.isAdmin().catch(()=>false);
       api.live(refresh);
-      installTip();
+      if(!WIDGET) installTip();
+      if(WIDGET) setInterval(refresh, 10*60*1000);
     }
     await refresh();
   }
@@ -654,12 +766,12 @@ input,select{font:inherit;color:var(--fg);background:var(--surface);border:1px s
 
   // ---------------- 시작 ----------------
   (async()=>{
-    if(CFG.TEAM_NAME){ $("loginTeam").textContent=`${CFG.TEAM_NAME} · 팀 휴가 캘린더`; $("appTitle").textContent=`${CFG.TEAM_NAME} 휴가 캘린더`; document.title=`${CFG.TEAM_NAME} 휴가 캘린더`; }
+    if(CFG.TEAM_NAME){ $("loginTeam").textContent=`${CFG.TEAM_NAME} · 팀 휴가 캘린더`; $("appTitle").textContent=`${CFG.TEAM_NAME} 휴가 캘린더`; document.title=`${CFG.TEAM_NAME} 휴가 캘린더`; $("wgTitle").textContent=`${CFG.TEAM_NAME} 휴가 현황`; if(WIDGET) document.title=`${CFG.TEAM_NAME} 휴가 위젯`; }
     $("demoNote").hidden=!DEMO;
     // 메일 링크가 만료됐을 때 Supabase가 주소에 붙여주는 오류 처리
     const hp=new URLSearchParams(location.hash.slice(1)+"&"+location.search.slice(1));
     const linkErr=hp.get("error_description")||hp.get("error");
-    if(linkErr){ history.replaceState(null,"",location.pathname); }
+    if(linkErr){ history.replaceState(null,"",location.pathname+location.search); }
     api.onAuth((ev,user)=>{
       if(ev==="SIGNED_OUT"){ me=null; show("vLogin"); loginMode(false); return; }
       if(user && !me && (ev==="SIGNED_IN"||ev==="INITIAL_SESSION")) enter(user);
