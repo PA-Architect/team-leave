@@ -181,9 +181,9 @@ body.wg-dark{ color-scheme:dark; --wg-bg:#1b1e23; --wg-fg:#eceef2; --wg-muted:#9
   --m0:#7ea2ff; --m1:#f29a55; --m2:#4fc9a3; --m3:#e77cc9; --m4:#a891ff; --m5:#e0bd45; --m6:#f07a88; --m7:#5cc5df; --m8:#a5c95a; --m9:#d39a62; --m10:#f58bbd; --m11:#8f9cff }
 body.widget:not(.wall){ background:var(--wg-bg) }
 body.wall{ background:var(--wall); min-height:100vh }
-.wgwrap{ display:flex; align-items:flex-start; max-width:430px; margin:0 auto }
+.wgwrap{ display:flex; align-items:flex-start; max-width:444px; margin:0 auto }
 .wgc{ flex:1; min-width:0; background:var(--wg-bg); color:var(--wg-fg); border-radius:22px; padding:20px 20px 16px; display:flex; flex-direction:column; gap:12px }
-body.wall .wgwrap{ position:fixed; top:var(--wall-top,48px); right:var(--wall-side,48px); width:430px; zoom:var(--wall-zoom,1) }
+body.wall .wgwrap{ position:fixed; top:var(--wall-top,48px); right:var(--wall-side,48px); width:444px; zoom:var(--wall-zoom,1) }
 body.wall .wgc{ box-shadow:var(--wg-shadow) }
 body.wall.pos-left .wgwrap{ right:auto; left:var(--wall-side,48px) }
 .wgc-top{ display:flex; align-items:center; justify-content:space-between; gap:8px }
@@ -237,9 +237,9 @@ body.wall.pos-left .wgwrap{ right:auto; left:var(--wall-side,48px) }
   body.widget .wgc-top button, body.widget .wgc-top a{ -webkit-app-region:no-drag; app-region:no-drag }
 }
 /* 프로젝트 탭 · 위젯 안 입력 창 */
-.ptabs{flex:none;width:48px;display:flex;flex-direction:column;gap:6px;padding:54px 0 0 6px}
+.ptabs{flex:none;width:62px;display:flex;flex-direction:column;gap:6px;padding:54px 0 0 6px}
 .ptabs:empty{display:none}
-.ptab{border:0;border-radius:10px 0 0 10px;min-height:54px;padding:6px 3px;font-size:11px;font-weight:600;line-height:1.25;color:var(--wg-fg);background:color-mix(in srgb,var(--pc) 24%,var(--wg-bg));word-break:keep-all;overflow-wrap:anywhere;text-align:center}
+.ptab{border:0;border-radius:10px 0 0 10px;min-height:50px;padding:6px 4px;font-size:11.5px;font-weight:600;line-height:1.3;letter-spacing:-.01em;color:var(--wg-fg);background:color-mix(in srgb,var(--pc) 24%,var(--wg-bg));word-break:keep-all;overflow-wrap:anywhere;text-align:center}
 .ptab:hover{background:color-mix(in srgb,var(--pc) 40%,var(--wg-bg))}
 .ptab[aria-pressed="true"]{background:var(--pc);color:var(--wg-bg)}
 .ptab.all{--pc:var(--wg-muted);min-height:40px}
@@ -538,6 +538,8 @@ body.app .gate{min-height:calc(100vh - 30px)}
       </section>
     </div>
     <div id="wgProjOnly" hidden>
+      <p class="wnote" id="wgPGuest" hidden style="margin-top:10px">이 프로젝트의 팀원이 아니어서 일정만 볼 수 있습니다. 업무 공지와 확인사항은 팀장·팀원에게만 보입니다.</p>
+      <div id="wgPPrivate">
       <hr>
       <section style="margin-top:12px">
         <h3>업무 공지</h3>
@@ -551,6 +553,7 @@ body.app .gate{min-height:calc(100vh - 30px)}
         <form class="wline" id="wgCkForm" novalidate><input id="wgCkInput" maxlength="120" placeholder="확인할 내용을 입력" autocomplete="off" aria-label="확인사항 내용"><button class="wbtn" type="submit">추가</button></form>
         <details id="wgDoneBox"><summary id="wgDoneSum">확인완료</summary><ul class="wgc-list" id="wgChecksDone" style="margin-top:6px"></ul></details>
       </section>
+      </div>
       <hr style="margin-top:12px">
       <section style="margin-top:12px">
         <h3>팀원</h3>
@@ -902,6 +905,7 @@ body.app .gate{min-height:calc(100vh - 30px)}
   let proj={projects:[],members:[],events:[],notices:[],checks:[],admins:[]}, projReady=false, curProj=null;
   const pcolor = P => `var(--m${P.color})`;
   const isLeader = P => admin || P.leader_id===me?.id;
+  const isMember = P => isLeader(P) || proj.members.some(x=>x.project_id===P.id && x.user_id===me?.id);
   const activeProjects = () => proj.projects.filter(p=>!p.archived);
   const pOn = (list,s) => list.filter(e=>e.start_date<=s && s<=e.end_date);
   const rangeText = (a,b) => a===b ? fmt(a) : `${fmt(a)} ~ ${fmt(b)}`;
@@ -924,7 +928,7 @@ body.app .gate{min-height:calc(100vh - 30px)}
   function renderTabs(){
     const nav=$("ptabs"); nav.replaceChildren();
     if(!projReady) return;
-    const ps=activeProjects();
+    const ps=activeProjects().filter(isMember);   // 탭은 내가 속한 프로젝트만 (관리자는 전체)
     if(!ps.length && !admin) return;
     nav.append(h("button",{type:"button",class:"ptab all","aria-pressed":String(!curProj),text:"전체",title:"팀 휴가 달력",onclick:()=>{ curProj=null; wgSel=null; renderWidget(entries()); }}));
     ps.forEach(P=>nav.append(h("button",{type:"button",class:"ptab",style:`--pc:${pcolor(P)}`,"aria-pressed":String(curProj===P.id),text:P.name,title:P.name+" 프로젝트 달력",onclick:()=>{ curProj=P.id; wgSel=null; renderWidget(entries()); }})));
@@ -937,7 +941,8 @@ body.app .gate{min-height:calc(100vh - 30px)}
   function renderWidget(list){
     const sel=wgSel||today, d0=parse(today);
     const y=wgView.getFullYear(), m=wgView.getMonth();
-    const P = (projReady && curProj && proj.projects.find(p=>p.id===curProj)) || null;
+    let P = (projReady && curProj && proj.projects.find(p=>p.id===curProj)) || null;
+    if(P && !isMember(P)){ P=null; curProj=null; }
     const pev = P ? proj.events.filter(e=>e.project_id===P.id) : [];
     renderTabs();
     $("wgBig").textContent=d0.getDate();
@@ -977,6 +982,7 @@ body.app .gate{min-height:calc(100vh - 30px)}
     const sd=parse(sel);
     $("wgDayTitle").textContent=`${sd.getMonth()+1}.${pad(sd.getDate())} ${DOW[sd.getDay()]}${sel===today?" · 오늘":""}${HOLIDAYS[sel]?" · "+HOLIDAYS[sel]:""}`;
     $("wgAdd").textContent = P ? "+ 일정" : "+ 휴가";
+    $("wgAdd").hidden = !!P && !isMember(P);
     const ul=$("wgDay"); ul.replaceChildren();
     if(P){
       const es=pOn(pev,sel);
@@ -1043,7 +1049,8 @@ body.app .gate{min-height:calc(100vh - 30px)}
   }
 
   function renderProjPanels(P){
-    const lead=isLeader(P);
+    const lead=isLeader(P), mem=isMember(P);
+    $("wgPPrivate").hidden=!mem; $("wgPGuest").hidden=mem;
     // 업무 공지
     const nl=$("wgPNotices"); nl.replaceChildren();
     const ns=proj.notices.filter(n=>n.project_id===P.id).sort((a,b)=>a.created_at<b.created_at?1:-1).slice(0,6);
