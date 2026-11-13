@@ -181,9 +181,11 @@ body.wg-dark{ color-scheme:dark; --wg-bg:#1b1e23; --wg-fg:#eceef2; --wg-muted:#9
   --m0:#7ea2ff; --m1:#f29a55; --m2:#4fc9a3; --m3:#e77cc9; --m4:#a891ff; --m5:#e0bd45; --m6:#f07a88; --m7:#5cc5df; --m8:#a5c95a; --m9:#d39a62; --m10:#f58bbd; --m11:#8f9cff }
 body.widget:not(.wall){ background:var(--wg-bg) }
 body.wall{ background:var(--wall); min-height:100vh }
-.wgc{ width:100%; max-width:380px; margin:0 auto; background:var(--wg-bg); color:var(--wg-fg); border-radius:22px; padding:20px 20px 16px; display:flex; flex-direction:column; gap:12px }
-body.wall .wgc{ position:fixed; top:var(--wall-top,48px); right:var(--wall-side,48px); width:380px; box-shadow:var(--wg-shadow); zoom:var(--wall-zoom,1) }
-body.wall.pos-left .wgc{ right:auto; left:var(--wall-side,48px) }
+.wgwrap{ display:flex; align-items:flex-start; max-width:430px; margin:0 auto }
+.wgc{ flex:1; min-width:0; background:var(--wg-bg); color:var(--wg-fg); border-radius:22px; padding:20px 20px 16px; display:flex; flex-direction:column; gap:12px }
+body.wall .wgwrap{ position:fixed; top:var(--wall-top,48px); right:var(--wall-side,48px); width:430px; zoom:var(--wall-zoom,1) }
+body.wall .wgc{ box-shadow:var(--wg-shadow) }
+body.wall.pos-left .wgwrap{ right:auto; left:var(--wall-side,48px) }
 .wgc-top{ display:flex; align-items:center; justify-content:space-between; gap:8px }
 .wgc-date{ display:flex; align-items:baseline; gap:8px; min-width:0 }
 .wgc-date .big{ font-size:30px; font-weight:700; letter-spacing:-.02em; line-height:1; font-variant-numeric:tabular-nums }
@@ -228,11 +230,66 @@ body.wall.pos-left .wgc{ right:auto; left:var(--wall-side,48px) }
 .wgc-foot{ margin:0; font-size:10.5px; color:var(--wg-muted); text-align:center; opacity:.8 }
 /* 엣지 앱에서 제목 표시줄을 숨겼을 때(위젯처럼): 머리줄을 끌어서 창 이동, 창 버튼 자리 비우기 */
 @media (display-mode: window-controls-overlay){
-  body.widget .wgc{ max-width:none; border-radius:0 }
+  body.widget .wgwrap{ max-width:none }
+  body.widget .wgc{ border-radius:0 }
   body.widget .wgc-top{ -webkit-app-region:drag; app-region:drag; min-height:env(titlebar-area-height,32px);
     padding-right:calc(100vw - env(titlebar-area-x,0px) - env(titlebar-area-width,100vw) - 12px) }
   body.widget .wgc-top button, body.widget .wgc-top a{ -webkit-app-region:no-drag; app-region:no-drag }
 }
+/* 프로젝트 탭 · 위젯 안 입력 창 */
+.ptabs{flex:none;width:48px;display:flex;flex-direction:column;gap:6px;padding:54px 0 0 6px}
+.ptabs:empty{display:none}
+.ptab{border:0;border-radius:10px 0 0 10px;min-height:54px;padding:6px 3px;font-size:11px;font-weight:600;line-height:1.25;color:var(--wg-fg);background:color-mix(in srgb,var(--pc) 24%,var(--wg-bg));word-break:keep-all;overflow-wrap:anywhere;text-align:center}
+.ptab:hover{background:color-mix(in srgb,var(--pc) 40%,var(--wg-bg))}
+.ptab[aria-pressed="true"]{background:var(--pc);color:var(--wg-bg)}
+.ptab.all{--pc:var(--wg-muted);min-height:40px}
+.ptab.add{--pc:var(--wg-muted);min-height:36px;background:none;border:1.5px dashed var(--wg-faint);border-right:0;color:var(--wg-muted);font-size:16px}
+.wgc-phead{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:12px;background:color-mix(in srgb,var(--pc) 16%,var(--wg-bg));min-width:0}
+.wgc-phead i{flex:none;width:10px;height:10px;border-radius:50%;background:var(--pc)}
+.wgc-phead b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wgc-phead span{flex:1;min-width:0;font-size:12px;color:var(--wg-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wgc-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.wgc-h h3{margin:0}
+.wbtn{font:inherit;font-size:12.5px;height:28px;padding:0 11px;border-radius:999px;border:1px solid var(--wg-line);background:var(--wg-bg);color:var(--wg-fg);white-space:nowrap}
+.wbtn:hover{background:var(--wg-sel)}
+.wbtn.pri{background:var(--wg-fg);color:var(--wg-bg);border-color:var(--wg-fg);font-weight:600}
+.wbtn.pri:disabled{opacity:.5}
+.wbtn.big{height:38px;border-radius:10px;flex:1}
+.wx{flex:none;border:0;background:none;color:var(--wg-muted);font-size:14px;width:22px;height:22px;border-radius:6px;line-height:1;padding:0}
+.wx:hover,.wx.arm{background:var(--wg-sel);color:var(--wg-ring)}
+.wgc-list li .grow{flex:1;min-width:0;overflow-wrap:anywhere}
+.wgc-list li .sub2{display:block;color:var(--wg-muted);font-size:11.5px}
+.wgc-list .ptag{flex:none;font-size:11px;font-weight:700;color:var(--pc);white-space:nowrap}
+.wline{display:flex;flex-direction:row;gap:6px;margin-top:8px}
+.wline .wbtn{height:34px;border-radius:9px}
+.wgc input:not([type=checkbox]):not([type=range]),.wgm input:not([type=checkbox]):not([type=range]),.wgm select,.wgm textarea{background:var(--wg-bg);color:var(--wg-fg);border:1px solid var(--wg-line);border-radius:9px;height:34px;font-size:13px}
+.wgm textarea{height:auto;min-height:64px}
+.wline input{flex:1}
+.wck{flex:none;width:18px;height:18px;border-radius:50%;border:1.5px solid var(--wg-muted);background:none;padding:0;transform:translateY(3px)}
+.wck.on{background:var(--pc);border-color:var(--pc)}
+.wgc details summary{cursor:pointer;font-size:12.5px;color:var(--wg-muted);margin-top:8px}
+.wgc details li .grow{text-decoration:line-through;color:var(--wg-muted)}
+.wmem{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:13px}
+.wmem .p{display:inline-flex;align-items:baseline;gap:5px}
+.wmem .p i{width:8px;height:8px;border-radius:50%;background:var(--c);transform:translateY(-1px)}
+.wmem .p small{color:var(--wg-muted)}
+.wgm{position:fixed;inset:0;z-index:40;background:rgba(15,18,24,.38);display:grid;place-items:start center;padding:56px 14px 14px;overflow:auto}
+.wgm-card{width:100%;max-width:350px;background:var(--wg-bg);color:var(--wg-fg);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--wg-shadow)}
+.wgm-head{display:flex;align-items:center;justify-content:space-between}
+.wgm-head h3{margin:0;font-size:16px}
+.wgm-body{display:flex;flex-direction:column;gap:10px}
+.wgm label{color:var(--wg-muted)}
+.wchips{display:flex;flex-wrap:wrap;gap:6px}
+.wchip{font:inherit;font-size:12.5px;height:30px;padding:0 11px;border-radius:999px;border:1px solid var(--wg-line);background:var(--wg-bg);color:var(--wg-fg)}
+.wchip[aria-pressed="true"]{background:var(--wg-fg);color:var(--wg-bg);border-color:var(--wg-fg);font-weight:600}
+.wsw{width:26px;height:26px;border-radius:50%;border:2px solid transparent;background:var(--pc);padding:0}
+.wsw[aria-pressed="true"]{border-color:var(--wg-fg);box-shadow:inset 0 0 0 2px var(--wg-bg)}
+.wrow{display:flex;gap:8px}
+.w2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.wnote{margin:0;font-size:12px;color:var(--wg-muted)}
+.wchecks{display:flex;flex-direction:column;gap:4px;max-height:180px;overflow:auto;border:1px solid var(--wg-line);border-radius:9px;padding:8px 10px}
+.wchecks label{flex-direction:row;align-items:center;gap:8px;font-size:13px;color:var(--wg-fg)}
+.wchecks input{width:16px;height:16px}
 body.widget .card{padding:18px;gap:10px}
 body.widget .gate{padding-block:12px}
 /* 설치형 위젯 프로그램(TeamLeaveWidget.exe) 안에서 열렸을 때 */
@@ -243,7 +300,12 @@ body.app #appBar{display:flex;position:fixed;inset:0 0 auto 0;height:30px;z-inde
 #appBar button{width:30px;height:24px;border:0;border-radius:6px;background:none;color:var(--wg-muted);display:grid;place-items:center;font-size:15px;line-height:1}
 #appBar button:hover{background:var(--wg-sel);color:var(--wg-fg)}
 #appBar button[aria-pressed="true"]{color:var(--wg-ring);background:var(--wg-sel)}
-body.app .wgc{max-width:none;border-radius:0;padding-top:6px}
+body.app .wgwrap{max-width:none}
+body.app .wgc{border-radius:0;padding-top:6px}
+#abOp{display:none}
+#abOp.on{display:grid}
+#abOpPop{position:fixed;top:32px;right:8px;z-index:60;background:var(--wg-bg);border:1px solid var(--wg-line);border-radius:10px;padding:10px 12px;box-shadow:var(--wg-shadow);display:flex;align-items:center;gap:8px;font-size:12px;color:var(--wg-muted);-webkit-app-region:no-drag;app-region:no-drag}
+#abOpPop input{width:130px;height:auto;padding:0;border:0;background:none}
 body.app .gate{min-height:calc(100vh - 30px)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -252,10 +314,12 @@ body.app .gate{min-height:calc(100vh - 30px)}
 <div id="appBar">
   <span>설계2실 휴가 위젯</span>
   <span class="ab">
+    <button type="button" id="abOp" aria-label="투명도" title="투명도"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.6c2.6 3 4.4 5.3 4.4 7.6A4.4 4.4 0 0 1 8 13.6a4.4 4.4 0 0 1-4.4-4.4c0-2.3 1.800-4.600 4.400-7.600z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M8 13.6a4.4 4.4 0 0 0 4.400-4.400H8z" fill="currentColor"/></svg></button>
     <button type="button" id="abPin" aria-pressed="false" aria-label="항상 위에 표시" title="항상 위에 표시"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 1.5h5l-.8 4.2 2.3 2.6v1.2H8.6V14L8 15l-.6-1V9.5H4V8.3l2.3-2.6z" fill="currentColor"/></svg></button>
     <button type="button" id="abHide" aria-label="트레이로 숨기기" title="숨기기 (트레이 아이콘으로 다시 열기)">×</button>
   </span>
 </div>
+<div id="abOpPop" hidden><span>투명</span><input type="range" id="abOpRange" min="40" max="100" step="5" value="100" aria-label="투명도"><span>선명</span></div>
 
 <!-- ① 로그인 화면 -->
 <section class="gate" id="vLogin" hidden>
@@ -396,7 +460,7 @@ body.app .gate{min-height:calc(100vh - 30px)}
           <label for="fType">구분
             <select id="fType">
               <option>연차</option><option>오전반차</option><option>오후반차</option>
-              <option>경조휴가</option><option>병가</option><option>교육·출장</option><option>기타</option>
+              <option>경조휴가</option><option>병가</option><option>교육·출장</option><option>초과근무 보상</option><option>기타</option>
             </select>
           </label>
           <div class="row">
@@ -431,6 +495,8 @@ body.app .gate{min-height:calc(100vh - 30px)}
 
 <!-- ④ 위젯 모드 (?widget, 바탕화면용 ?widget&wall) -->
 <div id="vWidget" hidden>
+ <div class="wgwrap">
+  <nav class="ptabs" id="ptabs" aria-label="프로젝트 탭"></nav>
   <div class="wgc">
     <header class="wgc-top">
       <div class="wgc-date"><span class="big" id="wgBig"></span><span class="sub" id="wgSub"></span></div>
@@ -439,27 +505,63 @@ body.app .gate{min-height:calc(100vh - 30px)}
         <button type="button" id="wgFwd" aria-label="다음 달">›</button>
         <span class="sep"></span>
         <button type="button" id="wgTheme" aria-label="밝게/어둡게 전환" title="밝게/어둡게"><svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.8a6.2 6.2 0 0 1 0 12.4z" fill="currentColor"/></svg></button>
-        <a href="./" target="_blank" rel="noopener" aria-label="전체 캘린더 열기" title="전체 캘린더 (휴가 등록)">↗</a>
+        <a href="./" target="_blank" rel="noopener" aria-label="전체 캘린더 열기" title="전체 캘린더">↗</a>
       </div>
     </header>
     <a class="wgc-notice" id="wgNotice" href="./" target="_blank" rel="noopener" hidden><b>공지</b><span id="wgNoticeText"></span></a>
+    <div class="wgc-phead" id="wgPHead" hidden><i></i><b id="wgPName"></b><span id="wgPInfo"></span><button type="button" class="wbtn" id="wgPEdit" hidden>설정</button></div>
     <div>
       <div class="wgc-dow"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
       <div class="wgc-grid" id="wgGrid"></div>
     </div>
     <hr>
     <section>
-      <h3 id="wgDayTitle"></h3>
+      <div class="wgc-h"><h3 id="wgDayTitle"></h3><button type="button" class="wbtn" id="wgAdd">+ 휴가</button></div>
       <ul class="wgc-list" id="wgDay"></ul>
     </section>
     <hr>
     <section>
-      <h3>다가오는 휴가<small>다음 주까지</small></h3>
+      <h3 id="wgNextTitle">다가오는 휴가<small>다음 주까지</small></h3>
       <ul class="wgc-list" id="wgNext"></ul>
     </section>
+    <div id="wgMainOnly" hidden>
+      <hr>
+      <section style="margin-top:12px">
+        <h3>프로젝트별 업무 일정<small>앞으로 2주</small></h3>
+        <ul class="wgc-list" id="wgPSched"></ul>
+      </section>
+    </div>
+    <div id="wgProjOnly" hidden>
+      <hr>
+      <section style="margin-top:12px">
+        <h3>업무 공지</h3>
+        <ul class="wgc-list" id="wgPNotices"></ul>
+        <form class="wline" id="wgPNForm" novalidate><input id="wgPNInput" maxlength="500" placeholder="공지 내용을 입력" autocomplete="off" aria-label="업무 공지 내용"><button class="wbtn" type="submit">올리기</button></form>
+      </section>
+      <hr style="margin-top:12px">
+      <section style="margin-top:12px">
+        <h3>확인사항<small id="wgCkCount"></small></h3>
+        <ul class="wgc-list" id="wgChecks"></ul>
+        <form class="wline" id="wgCkForm" novalidate><input id="wgCkInput" maxlength="120" placeholder="확인할 내용을 입력" autocomplete="off" aria-label="확인사항 내용"><button class="wbtn" type="submit">추가</button></form>
+        <details id="wgDoneBox"><summary id="wgDoneSum">확인완료</summary><ul class="wgc-list" id="wgChecksDone" style="margin-top:6px"></ul></details>
+      </section>
+      <hr style="margin-top:12px">
+      <section style="margin-top:12px">
+        <h3>팀원</h3>
+        <div class="wmem" id="wgPMembers"></div>
+      </section>
+      <p class="msg" id="wgPMsg" role="status"></p>
+    </div>
     <div class="wgc-year"><div class="bar" id="wgBar"></div><div class="yt"><span id="wgYear"></span><span id="wgLeft"></span></div></div>
     <p class="wgc-foot"><span id="wgStatus"></span> · <a href="privacy.html" target="_blank" rel="noopener" style="color:inherit">개인정보처리방침</a></p>
   </div>
+ </div>
+ <div class="wgm" id="wgModal" hidden>
+   <div class="wgm-card" role="dialog" aria-modal="true" aria-labelledby="wgmTitle">
+     <div class="wgm-head"><h3 id="wgmTitle"></h3><button type="button" class="wx" id="wgmClose" aria-label="닫기">×</button></div>
+     <div class="wgm-body" id="wgmBody"></div>
+   </div>
+ </div>
 </div>
 
 <script>
@@ -489,7 +591,15 @@ body.app .gate{min-height:calc(100vh - 30px)}
     bar.addEventListener("mousedown",e=>{ if(e.button===0 && !e.target.closest("button")) HOST.postMessage("drag"); });
     pin.onclick=()=>HOST.postMessage("pin");
     document.getElementById("abHide").onclick=()=>HOST.postMessage("hide");
-    HOST.addEventListener("message",e=>{ if(typeof e.data==="string" && e.data.startsWith("pin:")) pin.setAttribute("aria-pressed", e.data==="pin:1"?"true":"false"); });
+    const opBtn=document.getElementById("abOp"), opPop=document.getElementById("abOpPop"), opRange=document.getElementById("abOpRange");
+    HOST.addEventListener("message",e=>{
+      if(typeof e.data!=="string") return;
+      if(e.data.startsWith("pin:")) pin.setAttribute("aria-pressed", e.data==="pin:1"?"true":"false");
+      else if(e.data.startsWith("opacity:")){ opBtn.classList.add("on"); const v=parseInt(e.data.slice(8),10); if(v>=40&&v<=100) opRange.value=v; }
+    });
+    opBtn.onclick=()=>{ opPop.hidden=!opPop.hidden; };
+    opRange.addEventListener("input",()=>HOST.postMessage("opacity:"+opRange.value));
+    document.addEventListener("mousedown",e=>{ if(!opPop.hidden && !opPop.contains(e.target) && !opBtn.contains(e.target)) opPop.hidden=true; });
   }
 
   const $ = id => document.getElementById(id);
@@ -572,6 +682,21 @@ body.app .gate{min-height:calc(100vh - 30px)}
         const err=n.error||r.error||st.error; if(err) throw err;
         return {notices:n.data, reads:r.data, statuses:st.data};
       },
+      async loadProjects(){
+        const since = `${new Date().getFullYear()-1}-01-01`;
+        const [p,m,e,n,c]=await Promise.all([
+          sb.from("projects").select("id,name,color,leader_id,archived,created_at").order("created_at"),
+          sb.from("project_members").select("project_id,user_id"),
+          sb.from("project_events").select("id,project_id,title,start_date,end_date,memo,created_by").gte("end_date",since).order("start_date"),
+          sb.from("project_notices").select("id,project_id,body,author_id,created_at").order("created_at",{ascending:false}).limit(300),
+          sb.from("project_checks").select("id,project_id,body,done,done_by,done_at,created_by,created_at").order("created_at")
+        ]);
+        const err=p.error||m.error||e.error||n.error||c.error; if(err) throw err;
+        return {projects:p.data, members:m.data, events:e.data, notices:n.data, checks:c.data};
+      },
+      async pIns(table,rows){ const {data,error}=await sb.from(table).insert(rows).select(); if(error) throw error; return data||[]; },
+      async pUpd(table,id,row){ const {data,error}=await sb.from(table).update(row).eq("id",id).select("id"); if(error) throw error; if(!data||!data.length) throw {code:"denied"}; },
+      async pDel(table,match){ let q=sb.from(table).delete(); for(const k in match) q=q.eq(k,match[k]); const {error}=await q; if(error) throw error; },
       async saveNotice(row,id){
         const q = id ? sb.from("notices").update({...row, updated_at:new Date().toISOString()}).eq("id",id).select("id")
                      : sb.from("notices").insert(row).select("id");
@@ -586,13 +711,10 @@ body.app .gate{min-height:calc(100vh - 30px)}
       },
       live(cb){
         let t; const fire=()=>{ clearTimeout(t); t=setTimeout(cb,250); };
-        sb.channel("team-leave")
-          .on("postgres_changes",{event:"*",schema:"public",table:"leaves"},fire)
-          .on("postgres_changes",{event:"*",schema:"public",table:"members"},fire)
-          .on("postgres_changes",{event:"*",schema:"public",table:"notices"},fire)
-          .on("postgres_changes",{event:"*",schema:"public",table:"notice_reads"},fire)
-          .on("postgres_changes",{event:"*",schema:"public",table:"work_status"},fire)
-          .subscribe();
+        // 표 묶음마다 채널을 나눔: 아직 SQL을 실행하지 않은 기능이 있어도 다른 기능의 실시간 반영은 유지
+        const groups={ "team-leave":["leaves","members"], "team-leave-team":["notices","notice_reads","work_status"],
+          "team-leave-proj":["projects","project_members","project_events","project_notices","project_checks"] };
+        for(const name in groups){ let ch=sb.channel(name); groups[name].forEach(t=>{ ch=ch.on("postgres_changes",{event:"*",schema:"public",table:t},fire); }); ch.subscribe(); }
         document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") fire(); });
       }
     };
@@ -616,6 +738,13 @@ body.app .gate{min-height:calc(100vh - 30px)}
       {id:"n2",author_id:"demo-b",title:"(예시) 다음 주 화요일 주간회의는 10시로 변경",body:"회의실 3층 대회의실",pinned:false,created_at:nowIso,updated_at:nowIso}
     ];
     let reads=[{notice_id:"n2",user_id:"demo-a"}];
+    const pdb={
+      projects:[{id:"p1",name:"(예시) 세종 국책",color:0,leader_id:"demo-a",archived:false,created_at:"2026-01-01T00:00:00Z"},{id:"p2",name:"(예시) 대전 체육관",color:5,leader_id:"demo-me",archived:false,created_at:"2026-01-02T00:00:00Z"}],
+      project_members:[{project_id:"p1",user_id:"demo-me"},{project_id:"p1",user_id:"demo-b"},{project_id:"p2",user_id:"demo-c"}],
+      project_events:[{id:"e1",project_id:"p1",title:"(예시) 중간보고",start_date:d(Math.min(t.getDate()+2,28)),end_date:d(Math.min(t.getDate()+2,28)),memo:"발주처 회의실",created_by:"demo-a"},{id:"e2",project_id:"p2",title:"(예시) 인허가 도서 접수",start_date:d(Math.min(t.getDate()+4,28)),end_date:d(Math.min(t.getDate()+5,28)),memo:"",created_by:"demo-me"}],
+      project_notices:[{id:"pn1",project_id:"p1",body:"(예시) 구조 검토 의견 금요일까지 회신 바랍니다.",author_id:"demo-a",created_at:nowIso}],
+      project_checks:[{id:"c1",project_id:"p1",body:"(예시) 주차 대수 재산정",done:false,done_by:null,done_at:null,created_by:"demo-a",created_at:nowIso},{id:"c2",project_id:"p1",body:"(예시) 대지 경계 확인",done:true,done_by:"demo-b",done_at:nowIso,created_by:"demo-a",created_at:nowIso}]
+    };
     let statuses=[{user_id:"demo-a",status:"현장",note:"(예시) 대전 현장, 15시 복귀",status_date:td,updated_at:nowIso},{user_id:"demo-c",status:"재택",note:"",status_date:td,updated_at:nowIso}];
     members[1].login_id="김설계";
     return {
@@ -630,6 +759,10 @@ body.app .gate{min-height:calc(100vh - 30px)}
       async setPassword(pw){ demoPw=pw; user={...user,user_metadata:{pin_set:true}}; return user; },
       async isAdmin(){ return true; },
       async load(){ return {members:members.map(x=>({...x})), leaves:leaves.map(x=>({...x}))}; },
+      async loadProjects(){ const c=k=>pdb[k].map(x=>({...x})); return {projects:c("projects"),members:c("project_members"),events:c("project_events"),notices:c("project_notices"),checks:c("project_checks")}; },
+      async pIns(table,rows){ const out=[]; for(const r of [].concat(rows)){ const row={id:table[8]+Date.now()+Math.random().toString(36).slice(2,6),created_at:new Date().toISOString(),created_by:"demo-me",author_id:"demo-me",archived:false,done:false,...r}; pdb[table].push(row); out.push(row); } return out; },
+      async pUpd(table,id,row){ Object.assign(pdb[table].find(x=>x.id===id),row); },
+      async pDel(table,match){ pdb[table]=pdb[table].filter(x=>!Object.keys(match).every(k=>x[k]===match[k])); if(table==="projects") for(const k of ["project_members","project_events","project_notices","project_checks"]) pdb[k]=pdb[k].filter(x=>x.project_id!==match.id); },
       async loadTeam(){ return {notices:notices.map(x=>({...x})), reads:reads.map(x=>({...x})), statuses:statuses.map(x=>({...x}))}; },
       async saveNotice(row,id){ if(id){ Object.assign(notices.find(n=>n.id===id),row,{updated_at:new Date().toISOString()}); } else { const id="n"+Date.now(); notices.unshift({id,author_id:"demo-me",created_at:new Date().toISOString(),updated_at:new Date().toISOString(),...row}); return id; } return id; },
       async deleteNotice(id){ notices=notices.filter(n=>n.id!==id); return true; },
@@ -754,12 +887,56 @@ body.app .gate{min-height:calc(100vh - 30px)}
     sp.append(document.createElement("i"), document.createTextNode(e.who + (withType && e.type!=="연차" ? `(${e.type})` : "")));
     return sp;
   }
+  // 프로젝트 상태
+  let proj={projects:[],members:[],events:[],notices:[],checks:[]}, projReady=false, curProj=null;
+  const pcolor = P => `var(--m${P.color})`;
+  const isLeader = P => admin || P.leader_id===me?.id;
+  const activeProjects = () => proj.projects.filter(p=>!p.archived);
+  const pOn = (list,s) => list.filter(e=>e.start_date<=s && s<=e.end_date);
+  const rangeText = (a,b) => a===b ? fmt(a) : `${fmt(a)} ~ ${fmt(b)}`;
+  function h(tag,props,...kids){
+    const e=document.createElement(tag);
+    if(props) for(const k in props){ const v=props[k];
+      if(k==="class") e.className=v; else if(k==="text") e.textContent=v; else if(k==="style") e.style.cssText=v;
+      else if(k.startsWith("on")) e.addEventListener(k.slice(2),v); else if(k==="value") e.value=v;
+      else if(v!==false && v!=null) e.setAttribute(k, v===true?"":v); }
+    kids.flat().forEach(c=>{ if(c!=null) e.append(c); }); return e;
+  }
+  function xBtn(label,fn){
+    const b=h("button",{type:"button",class:"wx","aria-label":label,title:label,text:"×"});
+    b.onclick=async()=>{ if(!b.classList.contains("arm")){ b.classList.add("arm"); b.textContent="✓"; b.title="한 번 더 누르면 삭제"; setTimeout(()=>{ b.classList.remove("arm"); b.textContent="×"; b.title=label; },3000); return; }
+      b.disabled=true; try{ await fn(); await refresh(); }catch(e){ b.disabled=false; msg($("wgPMsg"),"삭제하지 못했습니다.","err"); } };
+    return b;
+  }
+  const emptyLi = t => h("li",{class:"empty",text:t});
+
+  function renderTabs(){
+    const nav=$("ptabs"); nav.replaceChildren();
+    if(!projReady) return;
+    const ps=activeProjects();
+    if(!ps.length && !admin) return;
+    nav.append(h("button",{type:"button",class:"ptab all","aria-pressed":String(!curProj),text:"전체",title:"팀 휴가 달력",onclick:()=>{ curProj=null; wgSel=null; renderWidget(entries()); }}));
+    ps.forEach(P=>nav.append(h("button",{type:"button",class:"ptab",style:`--pc:${pcolor(P)}`,"aria-pressed":String(curProj===P.id),text:P.name,title:P.name+" 프로젝트 달력",onclick:()=>{ curProj=P.id; wgSel=null; renderWidget(entries()); }})));
+    if(admin) nav.append(h("button",{type:"button",class:"ptab add",text:"+","aria-label":"프로젝트 만들기",title:"프로젝트 만들기",onclick:()=>openProjectModal(null)}));
+  }
+
   function renderWidget(list){
     const sel=wgSel||today, d0=parse(today);
     const y=wgView.getFullYear(), m=wgView.getMonth();
+    const P = (projReady && curProj && proj.projects.find(p=>p.id===curProj)) || null;
+    const pev = P ? proj.events.filter(e=>e.project_id===P.id) : [];
+    renderTabs();
     $("wgBig").textContent=d0.getDate();
     $("wgSub").textContent=`${y}년 ${m+1}월`;
-    // 미니 달력: 날짜 아래 사람별 색 점
+    // 프로젝트 머리줄
+    $("wgPHead").hidden=!P; $("wgMainOnly").hidden=true; $("wgProjOnly").hidden=!P;
+    if(P){
+      $("wgPHead").style.setProperty("--pc",pcolor(P)); $("wgPName").textContent=P.name;
+      const cnt=proj.members.filter(x=>x.project_id===P.id && x.user_id!==P.leader_id).length;
+      $("wgPInfo").textContent=`팀장 ${members[P.leader_id]||"미지정"} · 팀원 ${cnt}명`;
+      $("wgPEdit").hidden=!isLeader(P); $("wgNotice").hidden=true;
+    }
+    // 미니 달력: 전체 = 사람별 휴가 점 / 프로젝트 = 그 프로젝트 일정 점
     const first=new Date(y,m,1), start=new Date(first); start.setDate(1-first.getDay());
     const weeks=Math.ceil((first.getDay()+new Date(y,m+1,0).getDate())/7);
     const g=$("wgGrid"); g.replaceChildren();
@@ -771,40 +948,76 @@ body.app .gate{min-height:calc(100vh - 30px)}
       if(s===today) b.classList.add("today"); if(s===sel) b.classList.add("sel");
       const n=document.createElement("span"); n.className="n"; n.textContent=d.getDate();
       const dots=document.createElement("span"); dots.className="dots";
-      const es=onDay(list,s);
-      if(es.length){
-        const shown=es.length>4?es.slice(0,3):es;
-        for(const e of shown){ const i=document.createElement("i"); if(HALF.has(e.type)) i.className="half"; i.style.setProperty("--c",e.c); dots.append(i); }
-        if(es.length>4){ const more=document.createElement("b"); more.textContent=`+${es.length-3}`; dots.append(more); }
+      const marks = P ? pOn(pev,s).map(e=>({c:pcolor(P),half:false,label:e.title})) : onDay(list,s).map(e=>({c:e.c,half:HALF.has(e.type),label:e.who+" "+e.type}));
+      if(marks.length){
+        const shown=marks.length>4?marks.slice(0,3):marks;
+        for(const k of shown){ const i=document.createElement("i"); if(k.half) i.className="half"; i.style.setProperty("--c",k.c); dots.append(i); }
+        if(marks.length>4){ const more=document.createElement("b"); more.textContent=`+${marks.length-3}`; dots.append(more); }
       } else if(!isOff(s)){ const i=document.createElement("i"); i.className="none"; dots.append(i); }
       b.append(n,dots);
-      b.title=`${d.getMonth()+1}/${d.getDate()}${HOLIDAYS[s]?" "+HOLIDAYS[s]:""}`+(es.length?" · "+es.map(e=>e.who+" "+e.type).join(", "):"");
+      b.title=`${d.getMonth()+1}/${d.getDate()}${HOLIDAYS[s]?" "+HOLIDAYS[s]:""}`+(marks.length?" · "+marks.map(k=>k.label).join(", "):"");
       b.addEventListener("click",()=>{ wgSel = s===today?null:s; renderWidget(entries()); });
       g.append(b);
     }
-    // 선택한 날 부재자
+    // 선택한 날
     const sd=parse(sel);
     $("wgDayTitle").textContent=`${sd.getMonth()+1}.${pad(sd.getDate())} ${DOW[sd.getDay()]}${sel===today?" · 오늘":""}${HOLIDAYS[sel]?" · "+HOLIDAYS[sel]:""}`;
+    $("wgAdd").textContent = P ? "+ 일정" : "+ 휴가";
     const ul=$("wgDay"); ul.replaceChildren();
-    const es=onDay(list,sel);
-    if(!es.length){ const li=document.createElement("li"); li.className="empty"; li.textContent=isOff(sel)?"휴무일":"모두 출근"; ul.append(li); }
-    else for(const e of es){
-      const li=document.createElement("li"); li.append(wgPerson(e,false));
-      const t=document.createElement("span"); t.className="t"; t.textContent=e.type+(e.memo?` · ${e.memo}`:""); li.append(t); ul.append(li);
+    if(P){
+      const es=pOn(pev,sel);
+      if(!es.length) ul.append(emptyLi("등록된 업무 일정이 없습니다."));
+      else es.forEach(e=>ul.append(h("li",null,
+        h("span",{class:"p",style:`--c:${pcolor(P)}`},h("i")),
+        h("span",{class:"grow"},e.title,h("span",{class:"sub2",text:rangeText(e.start_date,e.end_date)+(e.memo?` · ${e.memo}`:"")+(members[e.created_by]?` · ${members[e.created_by]}`:"")})),
+        (e.created_by===me?.id||isLeader(P)) ? xBtn("일정 삭제",()=>api.pDel("project_events",{id:e.id})) : null)));
+    } else {
+      const es=onDay(list,sel);
+      if(!es.length) ul.append(emptyLi(isOff(sel)?"휴무일":"모두 출근"));
+      else for(const e of es){
+        const li=document.createElement("li"); li.append(wgPerson(e,false));
+        const t=document.createElement("span"); t.className="t grow"; t.textContent=e.type+(e.memo?` · ${e.memo}`:""); li.append(t);
+        if(e.uid===me?.id) li.append(xBtn("내 휴가 삭제",()=>api.del(e.id)));
+        ul.append(li);
+      }
     }
-    // 내일 ~ 다음 주 일요일
+    // 다가오는 휴가 / 다가오는 일정
     const nx=$("wgNext"); nx.replaceChildren();
-    const end=parse(today); end.setDate(end.getDate()+(7-end.getDay())+7);
-    let cnt=0;
-    for(let d=parse(today); d.setDate(d.getDate()+1), d<=end;){
-      const s=ymd(d); if(isOff(s)) continue;
-      const day=onDay(list,s); if(!day.length) continue;
-      const li=document.createElement("li");
-      const dt=document.createElement("span"); dt.className="dt"; dt.textContent=`${d.getMonth()+1}/${d.getDate()} ${DOW[d.getDay()]}`;
-      const ps=document.createElement("span"); ps.className="ps"; day.forEach(e=>ps.append(wgPerson(e,true)));
-      li.append(dt,ps); nx.append(li); cnt++;
+    const in14=parse(today); in14.setDate(in14.getDate()+14); const lim=ymd(in14);
+    if(P){
+      $("wgNextTitle").replaceChildren("다가오는 일정",h("small",{text:"앞으로 2주"}));
+      const up=pev.filter(e=>e.end_date>=today && e.start_date<=lim).sort((a,b)=>a.start_date<b.start_date?-1:1);
+      if(!up.length) nx.append(emptyLi("예정된 업무 일정이 없습니다."));
+      up.forEach(e=>nx.append(h("li",null,h("span",{class:"dt",text:fmt(e.start_date)}),h("span",{class:"grow"},e.title,e.end_date!==e.start_date?h("span",{class:"sub2",text:"~ "+fmt(e.end_date)}):null))));
+    } else {
+      $("wgNextTitle").replaceChildren("다가오는 휴가",h("small",{text:"다음 주까지"}));
+      const end=parse(today); end.setDate(end.getDate()+(7-end.getDay())+7);
+      let cnt=0;
+      for(let d=parse(today); d.setDate(d.getDate()+1), d<=end;){
+        const s=ymd(d); if(isOff(s)) continue;
+        const day=onDay(list,s); if(!day.length) continue;
+        const li=document.createElement("li");
+        const dt=document.createElement("span"); dt.className="dt"; dt.textContent=`${d.getMonth()+1}/${d.getDate()} ${DOW[d.getDay()]}`;
+        const ps=document.createElement("span"); ps.className="ps"; day.forEach(e=>ps.append(wgPerson(e,true)));
+        li.append(dt,ps); nx.append(li); cnt++;
+      }
+      if(!cnt) nx.append(emptyLi("예정된 휴가가 없습니다."));
+      // 프로젝트별 업무 일정 (메인 달력에는 점으로 표시하지 않고 글로만 알림)
+      const ps=activeProjects();
+      if(projReady && (ps.length || admin)){
+        $("wgMainOnly").hidden=false;
+        const sl=$("wgPSched"); sl.replaceChildren();
+        const byId={}; ps.forEach(p=>byId[p.id]=p);
+        const up=proj.events.filter(e=>byId[e.project_id] && e.end_date>=today && e.start_date<=lim).sort((a,b)=>a.start_date<b.start_date?-1:1);
+        if(!ps.length) sl.append(emptyLi("왼쪽 [+] 탭으로 첫 프로젝트를 만들어 보세요."));
+        else if(!up.length) sl.append(emptyLi("앞으로 2주 동안 등록된 업무 일정이 없습니다."));
+        up.forEach(e=>{ const pp=byId[e.project_id]; sl.append(h("li",null,
+          h("span",{class:"dt",text:fmt(e.start_date)}),
+          h("span",{class:"ptag",style:`--pc:${pcolor(pp)}`,text:pp.name}),
+          h("span",{class:"grow"},e.title,e.end_date!==e.start_date?h("span",{class:"sub2",text:"~ "+fmt(e.end_date)}):null))); });
+      }
     }
-    if(!cnt){ const li=document.createElement("li"); li.className="empty"; li.textContent="예정된 휴가가 없습니다."; nx.append(li); }
+    if(P) renderProjPanels(P);
     // 연간 진행 막대
     const Y=d0.getFullYear(), doy=Math.round((d0-new Date(Y,0,1))/864e5)+1, total=Math.round((new Date(Y+1,0,1)-new Date(Y,0,1))/864e5);
     const bar=$("wgBar"); bar.replaceChildren();
@@ -812,7 +1025,142 @@ body.app .gate{min-height:calc(100vh - 30px)}
     $("wgYear").textContent=`${Y} · ${doy}일째`; $("wgLeft").textContent=`남은 ${total-doy}일`;
     const now=new Date();
     $("wgStatus").textContent=`${pad(now.getHours())}:${pad(now.getMinutes())} 갱신 · 변경 시 자동 반영${DEMO?" · 데모":""}`;
+    if(!P) renderWidgetNotice();
   }
+
+  function renderProjPanels(P){
+    const lead=isLeader(P);
+    // 업무 공지
+    const nl=$("wgPNotices"); nl.replaceChildren();
+    const ns=proj.notices.filter(n=>n.project_id===P.id).sort((a,b)=>a.created_at<b.created_at?1:-1).slice(0,6);
+    if(!ns.length) nl.append(emptyLi("아직 업무 공지가 없습니다."));
+    ns.forEach(n=>nl.append(h("li",null,h("span",{class:"grow"},n.body,h("span",{class:"sub2",text:`${members[n.author_id]||"팀원"} · ${whenText(n.created_at)}`})),
+      (n.author_id===me?.id||lead) ? xBtn("공지 삭제",()=>api.pDel("project_notices",{id:n.id})) : null)));
+    // 확인사항 / 확인완료
+    const cs=proj.checks.filter(c=>c.project_id===P.id), open=cs.filter(c=>!c.done), done=cs.filter(c=>c.done).sort((a,b)=>(a.done_at||"")<(b.done_at||"")?1:-1);
+    const toggle=(c,on)=>async()=>{ try{ await api.pUpd("project_checks",c.id,{done:on,done_by:on?me.id:null,done_at:on?new Date().toISOString():null}); await refresh(); }catch(e){ msg($("wgPMsg"),"저장하지 못했습니다.","err"); } };
+    const cl=$("wgChecks"); cl.replaceChildren();
+    $("wgCkCount").textContent=open.length?`남은 ${open.length}건`:"";
+    if(!open.length) cl.append(emptyLi(cs.length?"남은 확인사항이 없습니다.":"확인할 내용을 아래에 추가하세요."));
+    open.forEach(c=>cl.append(h("li",{style:`--pc:${pcolor(P)}`},
+      h("button",{type:"button",class:"wck","aria-label":"확인 완료로 표시",title:"확인 완료로 표시",onclick:toggle(c,true)}),
+      h("span",{class:"grow"},c.body,h("span",{class:"sub2",text:`${members[c.created_by]||"팀원"} · ${whenText(c.created_at)}`})),
+      (c.created_by===me?.id||lead) ? xBtn("확인사항 삭제",()=>api.pDel("project_checks",{id:c.id})) : null)));
+    const dl=$("wgChecksDone"); dl.replaceChildren(); $("wgDoneBox").hidden=!done.length; $("wgDoneSum").textContent=`확인완료 ${done.length}건`;
+    done.forEach(c=>dl.append(h("li",{style:`--pc:${pcolor(P)}`},
+      h("button",{type:"button",class:"wck on","aria-label":"확인 완료 취소",title:"다시 확인사항으로",onclick:toggle(c,false)}),
+      h("span",{class:"grow",text:c.body}),h("span",{class:"t",text:`${members[c.done_by]||""} ${c.done_at?whenText(c.done_at):""}`}))));
+    // 팀원
+    const ml=$("wgPMembers"); ml.replaceChildren();
+    const ids=[P.leader_id,...proj.members.filter(x=>x.project_id===P.id).map(x=>x.user_id)].filter((v,i,a)=>v&&members[v]&&a.indexOf(v)===i);
+    if(!ids.length) ml.append(h("span",{class:"wnote",text:lead?"[설정]에서 팀장과 팀원을 지정하세요.":"아직 지정된 팀원이 없습니다."}));
+    ids.forEach(id=>ml.append(h("span",{class:"p",style:`--c:var(--m${colorIdx(id)})`},h("i"),members[id],id===P.leader_id?h("small",{text:"팀장"}):null)));
+  }
+
+  // ----- 위젯 안 입력 창 -----
+  function openModal(title,build){ $("wgmTitle").textContent=title; const b=$("wgmBody"); b.replaceChildren(); build(b); $("wgModal").hidden=false; const f=b.querySelector("input:not([type=date]),textarea"); if(f) f.focus(); }
+  function closeModal(){ $("wgModal").hidden=true; }
+  $("wgmClose").onclick=closeModal;
+  $("wgModal").addEventListener("mousedown",e=>{ if(e.target===$("wgModal")) closeModal(); });
+  document.addEventListener("keydown",e=>{ if(e.key==="Escape" && !$("wgModal").hidden) closeModal(); });
+  const field=(label,el)=>h("label",null,label,el);
+
+  function openLeaveModal(date){
+    const TYPES=["연차","오전반차","오후반차","경조휴가","병가","교육·출장","초과근무 보상","기타"]; let type="연차";
+    openModal("휴가 등록",b=>{
+      const chips=h("div",{class:"wchips",role:"group","aria-label":"구분"});
+      const sI=h("input",{type:"date",value:date}), eI=h("input",{type:"date",value:date}), mI=h("input",{maxlength:"60",placeholder:"예: 가족여행 · 급한 건은 카톡",autocomplete:"off"});
+      const note=h("p",{class:"wnote"}), out=h("p",{class:"msg",role:"status"});
+      const upd=()=>{
+        chips.replaceChildren(...TYPES.map(t=>h("button",{type:"button",class:"wchip","aria-pressed":String(t===type),text:t,onclick:()=>{ type=t; upd(); }})));
+        if(HALF.has(type)) eI.value=sI.value; eI.disabled=HALF.has(type);
+        const ok=sI.value&&eI.value&&eI.value>=sI.value;
+        note.textContent = !ok ? "" : COUNTED.has(type) ? `차감 기준 ${workDays(sI.value,eI.value,type)}일 (주말·공휴일 제외)` : `${workDays(sI.value,eI.value,type)}일 · 연차에서 차감하지 않는 구분입니다.`;
+      };
+      sI.onchange=()=>{ if(!eI.value||eI.value<sI.value) eI.value=sI.value; upd(); }; eI.onchange=upd;
+      const save=h("button",{type:"button",class:"wbtn pri big",text:"등록하기"});
+      save.onclick=async()=>{
+        const start=sI.value, end=HALF.has(type)?start:eI.value;
+        if(!start||!end) return msg(out,"시작일과 종료일을 선택하세요.","err");
+        if(end<start) return msg(out,"종료일이 시작일보다 빠릅니다.","err");
+        if(leaves.some(l=>l.user_id===me.id && l.start_date<=end && start<=l.end_date)) return msg(out,"이미 등록한 휴가와 날짜가 겹칩니다. 기존 건을 삭제한 뒤 다시 등록하세요.","err");
+        save.disabled=true; msg(out,"저장 중…");
+        try{ await api.add({type,start_date:start,end_date:end,memo:mI.value.trim()||null}); closeModal(); await refresh(); }
+        catch(e){ save.disabled=false; msg(out, e&&e.code==="23514" ? "이 구분은 아직 저장할 수 없습니다. 관리자가 Supabase에서 '프로젝트' SQL을 한 번 실행해야 합니다." : "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.","err"); }
+      };
+      b.append(field("구분",chips), h("div",{class:"w2"},field("시작일",sI),field("종료일",eI)), field("메모 (선택)",mI), note,
+        h("div",{class:"wrow"},h("button",{type:"button",class:"wbtn big",style:"flex:.5",text:"취소",onclick:closeModal}),save), out);
+      upd();
+    });
+  }
+
+  function openEventModal(P,date){
+    openModal(`${P.name} · 업무 일정`,b=>{
+      const tI=h("input",{maxlength:"60",placeholder:"예: 중간보고, 인허가 접수, 도면 납품",autocomplete:"off"});
+      const sI=h("input",{type:"date",value:date}), eI=h("input",{type:"date",value:date}), mI=h("input",{maxlength:"200",placeholder:"장소·준비물 등",autocomplete:"off"});
+      const out=h("p",{class:"msg",role:"status"});
+      sI.onchange=()=>{ if(!eI.value||eI.value<sI.value) eI.value=sI.value; };
+      const save=h("button",{type:"button",class:"wbtn pri big",text:"등록하기"});
+      save.onclick=async()=>{
+        const title=tI.value.trim();
+        if(!title) return msg(out,"일정 제목을 입력하세요.","err");
+        if(!sI.value||!eI.value) return msg(out,"시작일과 종료일을 선택하세요.","err");
+        if(eI.value<sI.value) return msg(out,"종료일이 시작일보다 빠릅니다.","err");
+        save.disabled=true; msg(out,"저장 중…");
+        try{ await api.pIns("project_events",{project_id:P.id,title,start_date:sI.value,end_date:eI.value,memo:mI.value.trim()||null}); closeModal(); await refresh(); }
+        catch(e){ save.disabled=false; msg(out,"저장하지 못했습니다. 이 프로젝트의 팀원인지 확인해 주세요.","err"); }
+      };
+      b.append(field("일정 제목",tI), h("div",{class:"w2"},field("시작일",sI),field("종료일",eI)), field("메모 (선택)",mI),
+        h("div",{class:"wrow"},h("button",{type:"button",class:"wbtn big",style:"flex:.5",text:"취소",onclick:closeModal}),save), out);
+    });
+  }
+
+  function openProjectModal(P){
+    let color = P ? P.color : (activeProjects().length % 12);
+    const cur = new Set(P ? proj.members.filter(x=>x.project_id===P.id).map(x=>x.user_id) : []);
+    const ids=Object.keys(members).filter(id=>members[id]).sort((a,b)=>members[a].localeCompare(members[b],"ko"));
+    openModal(P?"프로젝트 설정":"프로젝트 만들기",b=>{
+      const nI=h("input",{maxlength:"20",placeholder:"예: 세종 국책",value:P?P.name:"",autocomplete:"off"});
+      const sw=h("div",{class:"wchips",role:"group","aria-label":"탭 색"});
+      const paint=()=>sw.replaceChildren(...Array.from({length:12},(_,i)=>h("button",{type:"button",class:"wsw",style:`--pc:var(--m${i})`,"aria-pressed":String(i===color),"aria-label":`색 ${i+1}`,onclick:()=>{ color=i; paint(); }})));
+      paint();
+      const lead=h("select",null,h("option",{value:"",text:"(미지정)"}),...ids.map(id=>h("option",{value:id,text:members[id]})));
+      lead.value = P ? (P.leader_id||"") : (me?.id||""); lead.disabled=!admin;
+      const box=h("div",{class:"wchecks"},...ids.map(id=>{ const c=h("input",{type:"checkbox","data-id":id}); c.checked=cur.has(id); return h("label",null,c,members[id]); }));
+      const out=h("p",{class:"msg",role:"status"});
+      const save=h("button",{type:"button",class:"wbtn pri big",text:P?"저장":"만들기"});
+      save.onclick=async()=>{
+        const name=nI.value.trim(); if(!name) return msg(out,"프로젝트 이름을 입력하세요.","err");
+        const want=new Set([...box.querySelectorAll("input:checked")].map(c=>c.dataset.id));
+        save.disabled=true; msg(out,"저장 중…");
+        try{
+          let pid;
+          if(P){ pid=P.id; const row={name,color}; if(admin) row.leader_id=lead.value||null; await api.pUpd("projects",pid,row); }
+          else { const r=await api.pIns("projects",{name,color,leader_id:lead.value||null}); pid=r[0].id; }
+          const add=[...want].filter(id=>!cur.has(id)).map(id=>({project_id:pid,user_id:id}));
+          if(add.length) await api.pIns("project_members",add);
+          for(const id of cur) if(!want.has(id)) await api.pDel("project_members",{project_id:pid,user_id:id});
+          curProj=pid; closeModal(); await refresh();
+        }catch(e){ save.disabled=false; msg(out, e&&e.code==="denied" ? "이 프로젝트를 고칠 권한이 없습니다." : "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.","err"); }
+      };
+      b.append(field("프로젝트 이름 (탭에 표시, 20자까지)",nI), field("탭 색",sw), field(admin?"팀장":"팀장 (관리자만 변경)",lead), field("팀원 (열람·일정 입력 가능)",box),
+        h("div",{class:"wrow"},h("button",{type:"button",class:"wbtn big",style:"flex:.5",text:"취소",onclick:closeModal}),save), out);
+      if(P && admin){
+        const del=h("button",{type:"button",class:"linkbtn",style:"color:var(--wg-ring)",text:"이 프로젝트 삭제 (일정·공지·확인사항 모두 삭제)"});
+        del.onclick=async()=>{ if(!del.dataset.arm){ del.dataset.arm="1"; del.textContent="정말 삭제하려면 한 번 더 누르세요 (되돌릴 수 없음)"; return; }
+          try{ await api.pDel("projects",{id:P.id}); curProj=null; closeModal(); await refresh(); }catch(e){ msg(out,"삭제하지 못했습니다.","err"); } };
+        b.append(del);
+      }
+    });
+  }
+
+  $("wgAdd").onclick=()=>{ const P=curProj&&proj.projects.find(p=>p.id===curProj); if(P) openEventModal(P,wgSel||today); else openLeaveModal(wgSel||today); };
+  $("wgPEdit").onclick=()=>{ const P=proj.projects.find(p=>p.id===curProj); if(P) openProjectModal(P); };
+  $("wgPNForm").addEventListener("submit",async ev=>{ ev.preventDefault(); const v=$("wgPNInput").value.trim(); if(!v||!curProj) return;
+    try{ await api.pIns("project_notices",{project_id:curProj,body:v}); $("wgPNInput").value=""; msg($("wgPMsg"),""); await refresh(); }catch(e){ msg($("wgPMsg"),"공지를 올리지 못했습니다.","err"); } });
+  $("wgCkForm").addEventListener("submit",async ev=>{ ev.preventDefault(); const v=$("wgCkInput").value.trim(); if(!v||!curProj) return;
+    try{ await api.pIns("project_checks",{project_id:curProj,body:v}); $("wgCkInput").value=""; msg($("wgPMsg"),""); await refresh(); }catch(e){ msg($("wgPMsg"),"확인사항을 추가하지 못했습니다.","err"); } });
+
   $("wgPrev").onclick=()=>{ wgView.setMonth(wgView.getMonth()-1); renderWidget(entries()); };
   $("wgFwd").onclick=()=>{ wgView.setMonth(wgView.getMonth()+1); renderWidget(entries()); };
   function wgApplyTheme(t){
@@ -990,6 +1338,7 @@ body.app .gate{min-height:calc(100vh - 30px)}
       status(`${DEMO?"데모 모드 · 저장되지 않음 · ":""}팀원 ${Object.keys(members).filter(k=>members[k]).length}명 · 휴가 등록자 ${n}명${admin?" · 관리자: 모든 일정 삭제 가능":""}`, DEMO);
       today = ymd(new Date());
       try{ team=await api.loadTeam(); teamReady=true; }catch(e){ teamReady=false; }
+      if(WIDGET){ try{ proj=await api.loadProjects(); projReady=true; }catch(e){ projReady=false; } if(curProj && !proj.projects.some(p=>p.id===curProj)) curProj=null; }
       render();
       renderDash();
       if(WIDGET) renderWidget(entries());
