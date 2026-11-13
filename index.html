@@ -285,6 +285,12 @@ body.wall.pos-left .wgwrap{ right:auto; left:var(--wall-side,48px) }
 .wsw{width:26px;height:26px;border-radius:50%;border:2px solid transparent;background:var(--pc);padding:0}
 .wsw[aria-pressed="true"]{border-color:var(--wg-fg);box-shadow:inset 0 0 0 2px var(--wg-bg)}
 .wrow{display:flex;gap:8px}
+.wsw.sq{border-radius:8px;border-color:var(--wg-line)}
+.wsw.sq[aria-pressed="true"]{border-color:var(--wg-fg)}
+.wgm input[type=color]{width:44px;height:30px;padding:2px;border-radius:8px}
+.ptab.mgr{--pc:var(--wg-muted);min-height:40px;background:none;border:1.5px solid var(--wg-faint);border-right:0;color:var(--wg-muted);font-size:10.5px}
+.wteam{max-height:300px;overflow:auto;gap:8px}
+.wteam li{align-items:center}
 .w2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .wnote{margin:0;font-size:12px;color:var(--wg-muted)}
 .wchecks{display:flex;flex-direction:column;gap:4px;max-height:180px;overflow:auto;border:1px solid var(--wg-line);border-radius:9px;padding:8px 10px}
@@ -504,7 +510,7 @@ body.app .gate{min-height:calc(100vh - 30px)}
         <button type="button" id="wgPrev" aria-label="이전 달">‹</button>
         <button type="button" id="wgFwd" aria-label="다음 달">›</button>
         <span class="sep"></span>
-        <button type="button" id="wgTheme" aria-label="밝게/어둡게 전환" title="밝게/어둡게"><svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.8a6.2 6.2 0 0 1 0 12.4z" fill="currentColor"/></svg></button>
+        <button type="button" id="wgTheme" aria-label="화면 설정" title="화면 설정 (색)"><svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.8a6.2 6.2 0 0 1 0 12.4z" fill="currentColor"/></svg></button>
         <a href="./" target="_blank" rel="noopener" aria-label="전체 캘린더 열기" title="전체 캘린더">↗</a>
       </div>
     </header>
@@ -664,10 +670,11 @@ body.app .gate{min-height:calc(100vh - 30px)}
       async isAdmin(){ const {data,error}=await sb.rpc("is_admin"); return !error && data===true; },
       async load(){
         const since = `${new Date().getFullYear()-1}-01-01`;
-        const [m,l]=await Promise.all([
-          sb.from("members").select("id,display_name,created_at").order("created_at"),
-          sb.from("leaves").select("id,user_id,type,start_date,end_date,memo").gte("end_date",since).order("start_date")
-        ]);
+        const lp=sb.from("leaves").select("id,user_id,type,start_date,end_date,memo").gte("end_date",since).order("start_date");
+        // color 칸은 '팀 관리' SQL 실행 뒤에 생김 → 없으면 색 없이 다시 읽음
+        let m=await sb.from("members").select("id,display_name,created_at,color").order("created_at");
+        if(m.error) m=await sb.from("members").select("id,display_name,created_at").order("created_at");
+        const l=await lp;
         if(m.error) throw m.error; if(l.error) throw l.error;
         return {members:m.data, leaves:l.data};
       },
@@ -692,7 +699,8 @@ body.app .gate{min-height:calc(100vh - 30px)}
           sb.from("project_checks").select("id,project_id,body,done,done_by,done_at,created_by,created_at").order("created_at")
         ]);
         const err=p.error||m.error||e.error||n.error||c.error; if(err) throw err;
-        return {projects:p.data, members:m.data, events:e.data, notices:n.data, checks:c.data};
+        const a=await sb.from("admins").select("user_id");
+        return {projects:p.data, members:m.data, events:e.data, notices:n.data, checks:c.data, admins:a.error?[]:a.data};
       },
       async pIns(table,rows){ const {data,error}=await sb.from(table).insert(rows).select(); if(error) throw error; return data||[]; },
       async pUpd(table,id,row){ const {data,error}=await sb.from(table).update(row).eq("id",id).select("id"); if(error) throw error; if(!data||!data.length) throw {code:"denied"}; },
@@ -705,6 +713,7 @@ body.app .gate{min-height:calc(100vh - 30px)}
       },
       async deleteNotice(id){ const {data,error}=await sb.from("notices").delete().eq("id",id).select("id"); if(error) throw error; return (data||[]).length>0; },
       async markRead(id,uid){ const {error}=await sb.from("notice_reads").upsert({notice_id:id,user_id:uid},{onConflict:"notice_id,user_id",ignoreDuplicates:true}); if(error) throw error; },
+      async setMyColor(uid,color){ const {data,error}=await sb.from("members").update({color}).eq("id",uid).select("id"); if(error) throw error; if(!data||!data.length) throw {code:"denied"}; },
       async setStatus(uid,status,note,date){
         const {error}=await sb.from("work_status").upsert({user_id:uid,status,note:note||null,status_date:date,updated_at:new Date().toISOString()},{onConflict:"user_id"});
         if(error) throw error;
@@ -712,7 +721,7 @@ body.app .gate{min-height:calc(100vh - 30px)}
       live(cb){
         let t; const fire=()=>{ clearTimeout(t); t=setTimeout(cb,250); };
         // 표 묶음마다 채널을 나눔: 아직 SQL을 실행하지 않은 기능이 있어도 다른 기능의 실시간 반영은 유지
-        const groups={ "team-leave":["leaves","members"], "team-leave-team":["notices","notice_reads","work_status"],
+        const groups={ "team-leave":["leaves","members"], "team-leave-admin":["admins"], "team-leave-team":["notices","notice_reads","work_status"],
           "team-leave-proj":["projects","project_members","project_events","project_notices","project_checks"] };
         for(const name in groups){ let ch=sb.channel(name); groups[name].forEach(t=>{ ch=ch.on("postgres_changes",{event:"*",schema:"public",table:t},fire); }); ch.subscribe(); }
         document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") fire(); });
@@ -739,6 +748,7 @@ body.app .gate{min-height:calc(100vh - 30px)}
     ];
     let reads=[{notice_id:"n2",user_id:"demo-a"}];
     const pdb={
+      admins:[{user_id:"demo-me"}],
       projects:[{id:"p1",name:"(예시) 세종 국책",color:0,leader_id:"demo-a",archived:false,created_at:"2026-01-01T00:00:00Z"},{id:"p2",name:"(예시) 대전 체육관",color:5,leader_id:"demo-me",archived:false,created_at:"2026-01-02T00:00:00Z"}],
       project_members:[{project_id:"p1",user_id:"demo-me"},{project_id:"p1",user_id:"demo-b"},{project_id:"p2",user_id:"demo-c"}],
       project_events:[{id:"e1",project_id:"p1",title:"(예시) 중간보고",start_date:d(Math.min(t.getDate()+2,28)),end_date:d(Math.min(t.getDate()+2,28)),memo:"발주처 회의실",created_by:"demo-a"},{id:"e2",project_id:"p2",title:"(예시) 인허가 도서 접수",start_date:d(Math.min(t.getDate()+4,28)),end_date:d(Math.min(t.getDate()+5,28)),memo:"",created_by:"demo-me"}],
@@ -759,7 +769,8 @@ body.app .gate{min-height:calc(100vh - 30px)}
       async setPassword(pw){ demoPw=pw; user={...user,user_metadata:{pin_set:true}}; return user; },
       async isAdmin(){ return true; },
       async load(){ return {members:members.map(x=>({...x})), leaves:leaves.map(x=>({...x}))}; },
-      async loadProjects(){ const c=k=>pdb[k].map(x=>({...x})); return {projects:c("projects"),members:c("project_members"),events:c("project_events"),notices:c("project_notices"),checks:c("project_checks")}; },
+      async loadProjects(){ const c=k=>pdb[k].map(x=>({...x})); return {projects:c("projects"),members:c("project_members"),events:c("project_events"),notices:c("project_notices"),checks:c("project_checks"),admins:c("admins")}; },
+      async setMyColor(uid,color){ members[0].color=color; },
       async pIns(table,rows){ const out=[]; for(const r of [].concat(rows)){ const row={id:table[8]+Date.now()+Math.random().toString(36).slice(2,6),created_at:new Date().toISOString(),created_by:"demo-me",author_id:"demo-me",archived:false,done:false,...r}; pdb[table].push(row); out.push(row); } return out; },
       async pUpd(table,id,row){ Object.assign(pdb[table].find(x=>x.id===id),row); },
       async pDel(table,match){ pdb[table]=pdb[table].filter(x=>!Object.keys(match).every(k=>x[k]===match[k])); if(table==="projects") for(const k of ["project_members","project_events","project_notices","project_checks"]) pdb[k]=pdb[k].filter(x=>x.project_id!==match.id); },
@@ -888,7 +899,7 @@ body.app .gate{min-height:calc(100vh - 30px)}
     return sp;
   }
   // 프로젝트 상태
-  let proj={projects:[],members:[],events:[],notices:[],checks:[]}, projReady=false, curProj=null;
+  let proj={projects:[],members:[],events:[],notices:[],checks:[],admins:[]}, projReady=false, curProj=null;
   const pcolor = P => `var(--m${P.color})`;
   const isLeader = P => admin || P.leader_id===me?.id;
   const activeProjects = () => proj.projects.filter(p=>!p.archived);
@@ -917,7 +928,10 @@ body.app .gate{min-height:calc(100vh - 30px)}
     if(!ps.length && !admin) return;
     nav.append(h("button",{type:"button",class:"ptab all","aria-pressed":String(!curProj),text:"전체",title:"팀 휴가 달력",onclick:()=>{ curProj=null; wgSel=null; renderWidget(entries()); }}));
     ps.forEach(P=>nav.append(h("button",{type:"button",class:"ptab",style:`--pc:${pcolor(P)}`,"aria-pressed":String(curProj===P.id),text:P.name,title:P.name+" 프로젝트 달력",onclick:()=>{ curProj=P.id; wgSel=null; renderWidget(entries()); }})));
-    if(admin) nav.append(h("button",{type:"button",class:"ptab add",text:"+","aria-label":"프로젝트 만들기",title:"프로젝트 만들기",onclick:()=>openProjectModal(null)}));
+    if(admin){
+      nav.append(h("button",{type:"button",class:"ptab add",text:"+","aria-label":"프로젝트 만들기",title:"프로젝트 만들기",onclick:()=>openProjectModal(null)}));
+      nav.append(h("button",{type:"button",class:"ptab mgr",text:"팀 관리",title:"관리자 지정 · 팀원별 참여 프로젝트",onclick:openTeamModal}));
+    }
   }
 
   function renderWidget(list){
@@ -1167,13 +1181,84 @@ body.app .gate{min-height:calc(100vh - 30px)}
     document.body.classList.toggle("wg-light",t==="light"); document.body.classList.toggle("wg-dark",t==="dark");
     if(HOST) HOST.postMessage("theme:" + (t==="dark"||t==="light" ? t : (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")));
   }
-  $("wgTheme").onclick=()=>{
-    const cur = document.body.classList.contains("wg-dark") ? "dark" : document.body.classList.contains("wg-light") ? "light"
-      : (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-    const nt = cur==="dark" ? "light" : "dark"; wgApplyTheme(nt); store.set("tl-wg-theme",nt);
-  };
+  // ----- 위젯 색 (이 PC에만 저장) -----
+  const WG_VARS=["--wg-bg","--wg-fg","--wg-muted","--wg-line","--wg-sel","--wg-faint","--wg-ring"];
+  const hexOk = v => typeof v==="string" && /^#[0-9a-fA-F]{6}$/.test(v);
+  function lum(hex){ const f=i=>{ const c=parseInt(hex.substr(i,2),16)/255; return c<=0.03928?c/12.92:Math.pow((c+0.055)/1.055,2.4); }; return 0.2126*f(1)+0.7152*f(3)+0.0722*f(5); }
+  function wgApplyColor(bg,accent){
+    const st=document.body.style; WG_VARS.forEach(v=>st.removeProperty(v));
+    if(!hexOk(bg)){ wgApplyTheme(store.get("tl-wg-theme")); if(hexOk(accent)) st.setProperty("--wg-ring",accent); return; }
+    const dark=lum(bg)<0.32;
+    document.body.classList.toggle("wg-dark",dark); document.body.classList.toggle("wg-light",!dark);
+    st.setProperty("--wg-bg",bg); st.setProperty("--wg-fg",dark?"#eceef2":"#1d1f23");
+    st.setProperty("--wg-muted","color-mix(in srgb, var(--wg-fg) 58%, var(--wg-bg))");
+    st.setProperty("--wg-line","color-mix(in srgb, var(--wg-fg) 13%, var(--wg-bg))");
+    st.setProperty("--wg-sel","color-mix(in srgb, var(--wg-fg) 8%, var(--wg-bg))");
+    st.setProperty("--wg-faint","color-mix(in srgb, var(--wg-fg) 22%, var(--wg-bg))");
+    if(hexOk(accent)) st.setProperty("--wg-ring",accent);
+    if(HOST){ HOST.postMessage("theme:"+(dark?"dark":"light")); HOST.postMessage("bg:"+bg); }
+  }
+  const BG_PRESETS=[["밝게","#fbfaf7"],["어둡게","#1b1e23"],["하늘","#eaf2ff"],["민트","#e8f6ef"],["살구","#fff2e2"],["분홍","#fdecf1"],["라벤더","#f0ecfb"],["회색","#eceff3"],["남색","#1c2740"],["숲","#1b332d"],["와인","#3a1f2b"],["먹","#000000"]];
+  const AC_PRESETS=["#e0603a","#2f6fdb","#178a6b","#b0368f","#7656d6","#a07a00","#c23b4a","#2b8fa8"];
+  function openLookModal(){
+    openModal("화면 설정",b=>{
+      let bg=store.get("tl-wg-bg"), ac=store.get("tl-wg-accent");
+      const apply=()=>{ if(hexOk(bg)) store.set("tl-wg-bg",bg); else { try{ localStorage.removeItem("tl-wg-bg"); }catch(e){} } if(hexOk(ac)) store.set("tl-wg-accent",ac); else { try{ localStorage.removeItem("tl-wg-accent"); }catch(e){} } wgApplyColor(bg,ac); paint(); };
+      const bgBox=h("div",{class:"wchips",role:"group","aria-label":"위젯 배경색"}), acBox=h("div",{class:"wchips",role:"group","aria-label":"강조색"}), myBox=h("div",{class:"wchips",role:"group","aria-label":"내 표시 색"});
+      const bgPick=h("input",{type:"color","aria-label":"배경색 직접 고르기",value:hexOk(bg)?bg:"#fbfaf7",oninput:e=>{ bg=e.target.value; apply(); }});
+      const acPick=h("input",{type:"color","aria-label":"강조색 직접 고르기",value:hexOk(ac)?ac:"#e0603a",oninput:e=>{ ac=e.target.value; apply(); }});
+      const out=h("p",{class:"msg",role:"status"});
+      function paint(){
+        bgBox.replaceChildren(...BG_PRESETS.map(([n,c])=>h("button",{type:"button",class:"wsw sq",style:`--pc:${c}`,title:n,"aria-label":n,"aria-pressed":String((bg||"").toLowerCase()===c),onclick:()=>{ bg=c; bgPick.value=c; apply(); }})));
+        acBox.replaceChildren(...AC_PRESETS.map(c=>h("button",{type:"button",class:"wsw",style:`--pc:${c}`,"aria-label":"강조색 "+c,"aria-pressed":String((ac||"").toLowerCase()===c),onclick:()=>{ ac=c; acPick.value=c; apply(); }})));
+        const mine=colorIdx(me?.id);
+        myBox.replaceChildren(...Array.from({length:12},(_,i)=>h("button",{type:"button",class:"wsw",style:`--pc:var(--m${i})`,"aria-label":`내 표시 색 ${i+1}`,"aria-pressed":String(i===mine),onclick:async()=>{
+          try{ await api.setMyColor(me.id,i); msg(out,"내 표시 색을 바꿨습니다. 팀원 화면에도 반영됩니다.","ok"); await refresh(); paint(); }
+          catch(e){ msg(out,"표시 색을 저장하지 못했습니다. 관리자가 Supabase에서 '팀 관리' SQL을 한 번 실행해야 합니다.","err"); } }})));
+      }
+      paint();
+      b.append(
+        field("위젯 배경색 (이 PC에만 적용)",bgBox), h("div",{class:"wrow",style:"align-items:center"},h("span",{class:"wnote",text:"직접 고르기"}),bgPick),
+        field("강조색 (오늘 표시 · 공지)",acBox), h("div",{class:"wrow",style:"align-items:center"},h("span",{class:"wnote",text:"직접 고르기"}),acPick),
+        field("내 표시 색 (달력의 내 점 · 팀원 모두에게 보임)",myBox), out,
+        h("div",{class:"wrow"},h("button",{type:"button",class:"wbtn big",style:"flex:.6",text:"기본값으로",onclick:()=>{ bg=null; ac=null; try{ localStorage.removeItem("tl-wg-theme"); }catch(e){} apply(); }}),
+          h("button",{type:"button",class:"wbtn pri big",text:"닫기",onclick:closeModal})));
+    });
+  }
+  $("wgTheme").onclick=openLookModal;
+
+  // ----- 팀 관리 (관리자) -----
+  function openTeamModal(){
+    openModal("팀 관리",b=>{
+      const out=h("p",{class:"msg",role:"status"}), list=h("ul",{class:"wgc-list wteam"});
+      const draw=()=>{
+        const adm=new Set(proj.admins.map(a=>a.user_id)); if(admin&&me) adm.add(me.id);
+        const ids=Object.keys(members).filter(id=>members[id]).sort((a,b)=>members[a].localeCompare(members[b],"ko"));
+        list.replaceChildren(...ids.map(id=>{
+          const ps=activeProjects().filter(P=>P.leader_id===id||proj.members.some(x=>x.project_id===P.id&&x.user_id===id));
+          const on=adm.has(id), self=id===me?.id;
+          const btn=h("button",{type:"button",class:"wbtn"+(on?" pri":""),"aria-pressed":String(on),text:on?"관리자":"팀원",title:self?"본인은 해제할 수 없습니다":(on?"누르면 관리자 해제":"누르면 관리자로 지정")});
+          btn.disabled=self;
+          btn.onclick=async()=>{
+            if(on && !btn.dataset.arm){ btn.dataset.arm="1"; btn.textContent="해제 확인"; setTimeout(()=>{ delete btn.dataset.arm; btn.textContent="관리자"; },3000); return; }
+            btn.disabled=true; msg(out,"저장 중…");
+            try{ if(on) await api.pDel("admins",{user_id:id}); else await api.pIns("admins",{user_id:id});
+              await refresh(); msg(out,`${members[id]} 님을 ${on?"팀원으로 바꿨습니다":"관리자로 지정했습니다"}.`,"ok"); draw(); }
+            catch(e){ btn.disabled=false; msg(out,"저장하지 못했습니다. Supabase에서 '팀 관리' SQL을 한 번 실행했는지 확인해 주세요.","err"); }
+          };
+          return h("li",null,h("span",{class:"p",style:`--c:var(--m${colorIdx(id)})`},h("i")),
+            h("span",{class:"grow"},members[id]+(self?" (나)":""),h("span",{class:"sub2",text:ps.length?ps.map(P=>P.name+(P.leader_id===id?"(팀장)":"")).join(" · "):"참여 프로젝트 없음"})),btn);
+        }));
+      };
+      draw();
+      b.append(h("p",{class:"wnote",text:"관리자는 프로젝트 만들기·삭제, 팀장 지정, 팀 공지, 다른 팀원 일정 삭제, 관리자 지정을 할 수 있습니다."}), list, out,
+        h("p",{class:"wnote",text:"팀원 초대와 계정 삭제는 Supabase의 Authentication → Users에서 합니다. 팀장은 각 프로젝트의 [설정]에서 지정합니다."}),
+        h("button",{type:"button",class:"wbtn pri big",text:"닫기",onclick:closeModal}));
+    });
+  }
+
   if(WIDGET){
-    wgApplyTheme(store.get("tl-wg-theme"));
+    wgApplyColor(store.get("tl-wg-bg"),store.get("tl-wg-accent"));
     const q=new URLSearchParams(location.search);
     if(q.has("wall")){
       document.body.classList.add("wall");
@@ -1332,7 +1417,7 @@ body.app .gate{min-height:calc(100vh - 30px)}
   async function refresh(){
     try{
       const data=await api.load();
-      members={}; colorMap={}; data.members.forEach((m,i)=>{ members[m.id]=m.display_name; colorMap[m.id]=i%12; });
+      members={}; colorMap={}; data.members.forEach((m,i)=>{ members[m.id]=m.display_name; colorMap[m.id]=(m.color>=0&&m.color<=11&&m.color!==null)?m.color:i%12; });
       leaves=data.leaves;
       const n=new Set(leaves.map(l=>l.user_id)).size;
       status(`${DEMO?"데모 모드 · 저장되지 않음 · ":""}팀원 ${Object.keys(members).filter(k=>members[k]).length}명 · 휴가 등록자 ${n}명${admin?" · 관리자: 모든 일정 삭제 가능":""}`, DEMO);
