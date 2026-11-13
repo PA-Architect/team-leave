@@ -7,6 +7,13 @@
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#2754c5">
 <link rel="icon" href="icon-192.png">
+<script>
+  // 위젯 주소(?widget)로 열었을 때만 "휴가 위젯" 앱 정보를 붙임 (엣지 앱 설치용)
+  if (/(^|[?&])widget\b/.test(location.search.slice(1))) {
+    const l = document.createElement("link"); l.rel = "manifest"; l.href = "widget.webmanifest"; document.head.appendChild(l);
+    const t = document.querySelector('meta[name="theme-color"]'); if (t) t.content = "#fbfaf7";
+  }
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
@@ -26,7 +33,7 @@
 :root{
   --bg:#f3f5f8; --surface:#ffffff; --sunk:#eef1f5; --line:#dde2ea; --fg:#18202c; --muted:#5d6878;
   --accent:#2754c5; --accent-fg:#ffffff; --sun:#c8372d; --sat:#2754c5; --today:#fff4d6; --danger:#b42318; --warnbg:#fff1e6;
-  --m0:#2f6fdb; --m1:#d2671b; --m2:#178a6b; --m3:#b0368f; --m4:#7656d6; --m5:#a07a00; --m6:#c23b4a; --m7:#2b8fa8;
+  --m0:#2f6fdb; --m1:#d2671b; --m2:#178a6b; --m3:#b0368f; --m4:#7656d6; --m5:#a07a00; --m6:#c23b4a; --m7:#2b8fa8; --m8:#5a7d1a; --m9:#8a5a2b; --m10:#d14d8a; --m11:#3d4fb0;
   --font:"IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
   color-scheme:light;
@@ -34,7 +41,7 @@
 @media (prefers-color-scheme:dark){:root{
   --bg:#11151b; --surface:#181d25; --sunk:#141920; --line:#2a313c; --fg:#e7ebf1; --muted:#98a2b2;
   --accent:#7ea2ff; --accent-fg:#0d1320; --sun:#ff8a80; --sat:#8fb0ff; --today:#2e2914; --danger:#ff8a7a; --warnbg:#2b1d14;
-  --m0:#7ea2ff; --m1:#f29a55; --m2:#4fc9a3; --m3:#e77cc9; --m4:#a891ff; --m5:#e0bd45; --m6:#f07a88; --m7:#5cc5df;
+  --m0:#7ea2ff; --m1:#f29a55; --m2:#4fc9a3; --m3:#e77cc9; --m4:#a891ff; --m5:#e0bd45; --m6:#f07a88; --m7:#5cc5df; --m8:#a5c95a; --m9:#d39a62; --m10:#f58bbd; --m11:#8f9cff;
   color-scheme:dark}}
 *{box-sizing:border-box}
 html,body{margin:0}
@@ -122,39 +129,133 @@ input,select{font:inherit;color:var(--fg);background:var(--surface);border:1px s
   .chip .t{display:none}
   .dow div{padding:6px 4px;text-align:center}
 }
+/* team dashboard: notices + work status */
+.dash{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px;align-items:start}
+.ph{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0}
+.ph h2 small{font-weight:500;color:var(--danger);font-size:12px;margin-left:6px}
+button.sm{height:30px;padding:0 11px;font-size:12.5px;width:auto;border-radius:7px}
+textarea{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 9px;width:100%;min-width:0;resize:vertical;min-height:84px}
+textarea:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.nform{gap:8px}
+.nrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.nrow .grow{flex:1}
+.chk{flex-direction:row;align-items:center;gap:6px;font-size:13px;color:var(--fg);font-weight:500}
+.chk input{width:16px;height:16px;padding:0}
+.nwrap{border-radius:8px;background:var(--sunk);min-width:0}
+.nhead{display:flex;flex-direction:column;gap:2px;padding:9px 11px;width:100%;text-align:left;background:none;border:0;border-radius:8px;min-width:0}
+.nhead:hover{background:color-mix(in srgb,var(--accent) 6%,transparent)}
+.ntop{display:flex;align-items:center;gap:6px;min-width:0}
+.ntitle{font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nwrap.open .ntitle{white-space:normal;overflow-wrap:anywhere}
+.pinb{flex:none;font-size:11px;font-weight:700;color:var(--accent);border:1px solid currentColor;border-radius:4px;padding:0 5px;line-height:1.5}
+.newd{flex:none;width:7px;height:7px;border-radius:50%;background:var(--danger)}
+.nmeta{font-size:12px;color:var(--muted)}
+.nbody{padding:0 11px 10px;font-size:13.5px;white-space:pre-wrap;overflow-wrap:anywhere}
+.nact{display:flex;gap:6px;padding:0 11px 10px}
+.nmore{background:none;border:0;color:var(--accent);font-size:12.5px;padding:2px 0;align-self:flex-start}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.stchip{height:30px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-size:13px;display:inline-flex;align-items:center;gap:6px}
+.stchip i{width:8px;height:8px;border-radius:50%;background:var(--sc)}
+.stchip[aria-pressed="true"]{background:color-mix(in srgb,var(--sc) 16%,var(--surface));border-color:var(--sc);font-weight:600}
+.strow{display:flex;gap:6px;min-width:0}.strow input{flex:1}
+.stnote{margin:0;font-size:12.5px;color:var(--muted)}
+.slist{gap:0}
+.slist li{display:flex;align-items:center;gap:8px;padding:7px 2px;border-top:1px solid var(--line);font-size:13.5px;min-width:0}
+.slist .dot{width:8px;height:8px;border-radius:50%;background:var(--c);flex:none}
+.slist .nm{font-weight:600;flex:none;max-width:38%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill{flex:none;font-size:12px;font-weight:600;padding:1px 9px;border-radius:999px;color:var(--sc);background:color-mix(in srgb,var(--sc) 15%,var(--surface))}
+.pill.none{--sc:var(--muted)}
+.slist .note{flex:1;min-width:0;color:var(--muted);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slist .tm{flex:none;color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums}
+.ssum{font-size:12px;color:var(--muted)}
+@media (max-width:900px){.dash{grid-template-columns:minmax(0,1fr)}}
+.wgc-notice{display:flex;align-items:center;gap:8px;padding:8px 11px;border-radius:12px;background:var(--wg-sel);color:var(--wg-fg);text-decoration:none;font-size:13px;min-width:0}
+.wgc-notice b{flex:none;font-size:11.5px;color:var(--wg-ring)}
+.wgc-notice span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wgc-notice i{flex:none;width:7px;height:7px;border-radius:50%;background:var(--wg-ring)}
 /* widget mode */
-.wg{max-width:420px;margin:0 auto;padding-block:12px 16px;padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:10px}
-.wg-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-.wg-top b{font-size:15px}
-.wg-top .d{color:var(--muted);font-size:12px;margin-left:6px;font-variant-numeric:tabular-nums}
-.wg-open{font-size:12px;color:var(--accent);text-decoration:none;white-space:nowrap}
-.wg-open:hover{text-decoration:underline}
-.wg-sec{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;min-width:0}
-.wg-sec h3{margin:0;font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.02em}
-.wg-list{gap:4px}
-.wg-list li{display:flex;align-items:baseline;gap:6px;font-size:13px;min-width:0}
-.wg-list li i{flex:none;width:8px;height:8px;border-radius:50%;background:var(--c);transform:translateY(-1px)}
-.wg-list li .t{color:var(--muted);font-size:12px}
-.wg-list li .dt{flex:none;width:62px;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
-.wg-list li .nm{min-width:0;overflow-wrap:anywhere}
-.wg-mhead{display:flex;align-items:center;justify-content:space-between}
-.wg-mhead span{font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}
-.wg-mhead button{background:none;border:1px solid var(--line);border-radius:6px;width:26px;height:24px;line-height:1}
-.wg-dow,.wg-grid{display:grid;grid-template-columns:repeat(7,1fr);text-align:center}
-.wg-dow div{font-size:11px;color:var(--muted)}
-.wg-dow div:first-child,.wg-grid .sun,.wg-grid .hol{color:var(--sun)} .wg-dow div:last-child,.wg-grid .sat{color:var(--sat)}
-.wg-grid button{background:none;border:0;border-radius:6px;padding:3px 0 5px;font-family:var(--mono);font-size:12px;position:relative;font-variant-numeric:tabular-nums}
-.wg-grid button.out{opacity:.35}
-.wg-grid button.today{background:var(--today)}
-.wg-grid button.sel{box-shadow:inset 0 0 0 1.5px var(--accent)}
-.wg-grid button.has::after{content:"";position:absolute;left:50%;bottom:1px;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--accent)}
-.wg-foot{margin:0;font-size:11px;color:var(--muted);text-align:center}
+:root{ --wg-bg:#fbfaf7; --wg-fg:#1d1f23; --wg-muted:#7b7f87; --wg-line:#e7e4dd; --wg-sel:#efebe3; --wg-ring:#e0603a; --wg-faint:#d6d3cc; --wg-sun:#c8372d; --wg-sat:#2754c5; --wg-shadow:0 18px 50px rgba(20,24,32,.22),0 2px 6px rgba(20,24,32,.08); --wall:#8a929e }
+@media (prefers-color-scheme:dark){ :root{ --wg-bg:#1b1e23; --wg-fg:#eceef2; --wg-muted:#9aa1ad; --wg-line:#2c313a; --wg-sel:#272c34; --wg-ring:#ff8a5c; --wg-faint:#3a404a; --wg-sun:#ff8a80; --wg-sat:#8fb0ff; --wall:#2a2f37 } }
+body.wg-light{ color-scheme:light; --wg-bg:#fbfaf7; --wg-fg:#1d1f23; --wg-muted:#7b7f87; --wg-line:#e7e4dd; --wg-sel:#efebe3; --wg-ring:#e0603a; --wg-faint:#d6d3cc; --wg-sun:#c8372d; --wg-sat:#2754c5;
+  --m0:#2f6fdb; --m1:#d2671b; --m2:#178a6b; --m3:#b0368f; --m4:#7656d6; --m5:#a07a00; --m6:#c23b4a; --m7:#2b8fa8; --m8:#5a7d1a; --m9:#8a5a2b; --m10:#d14d8a; --m11:#3d4fb0 }
+body.wg-dark{ color-scheme:dark; --wg-bg:#1b1e23; --wg-fg:#eceef2; --wg-muted:#9aa1ad; --wg-line:#2c313a; --wg-sel:#272c34; --wg-ring:#ff8a5c; --wg-faint:#3a404a; --wg-sun:#ff8a80; --wg-sat:#8fb0ff;
+  --m0:#7ea2ff; --m1:#f29a55; --m2:#4fc9a3; --m3:#e77cc9; --m4:#a891ff; --m5:#e0bd45; --m6:#f07a88; --m7:#5cc5df; --m8:#a5c95a; --m9:#d39a62; --m10:#f58bbd; --m11:#8f9cff }
+body.widget:not(.wall){ background:var(--wg-bg) }
+body.wall{ background:var(--wall); min-height:100vh }
+.wgc{ width:100%; max-width:380px; margin:0 auto; background:var(--wg-bg); color:var(--wg-fg); border-radius:22px; padding:20px 20px 16px; display:flex; flex-direction:column; gap:12px }
+body.wall .wgc{ position:fixed; top:var(--wall-top,48px); right:var(--wall-side,48px); width:380px; box-shadow:var(--wg-shadow); zoom:var(--wall-zoom,1) }
+body.wall.pos-left .wgc{ right:auto; left:var(--wall-side,48px) }
+.wgc-top{ display:flex; align-items:center; justify-content:space-between; gap:8px }
+.wgc-date{ display:flex; align-items:baseline; gap:8px; min-width:0 }
+.wgc-date .big{ font-size:30px; font-weight:700; letter-spacing:-.02em; line-height:1; font-variant-numeric:tabular-nums }
+.wgc-date .sub{ font-size:14px; color:var(--wg-muted); white-space:nowrap }
+.wgc-ctl{ display:flex; align-items:center; gap:2px }
+.wgc-ctl button,.wgc-ctl a{ background:none; border:0; color:var(--wg-muted); width:28px; height:28px; border-radius:8px; display:grid; place-items:center; font-size:16px; text-decoration:none; line-height:1 }
+.wgc-ctl button:hover,.wgc-ctl a:hover{ background:var(--wg-sel); color:var(--wg-fg) }
+.wgc-ctl .sep{ width:1px; height:16px; background:var(--wg-line); margin:0 6px }
+.wgc-dow,.wgc-grid{ display:grid; grid-template-columns:repeat(7,1fr); text-align:center }
+.wgc-dow div{ font-size:12px; color:var(--wg-muted); padding-bottom:4px }
+.wgc-dow div:first-child{ color:var(--wg-sun) } .wgc-dow div:last-child{ color:var(--wg-sat) }
+.wgc-grid{ row-gap:4px }
+.wgc-grid button{ background:none; border:0; border-radius:12px; padding:6px 0 5px; display:flex; flex-direction:column; align-items:center; gap:4px; color:var(--wg-fg); min-width:0 }
+.wgc-grid button:hover{ background:var(--wg-sel) }
+.wgc-grid .n{ font-size:13px; font-variant-numeric:tabular-nums; line-height:1.2 }
+.wgc-grid .sun .n,.wgc-grid .hol .n{ color:var(--wg-sun) } .wgc-grid .sat .n{ color:var(--wg-sat) }
+.wgc-grid .out{ visibility:hidden }
+.wgc-grid .today{ box-shadow:inset 0 0 0 1.5px var(--wg-ring) }
+.wgc-grid .sel{ background:var(--wg-sel) }
+.wgc-grid .dots{ display:flex; gap:3px; height:7px; align-items:center }
+.wgc-grid .dots i{ width:7px; height:7px; border-radius:50%; background:var(--c) }
+.wgc-grid .dots i.half{ background:linear-gradient(90deg,var(--c) 50%,transparent 50%); box-shadow:inset 0 0 0 1.2px var(--c) }
+.wgc-grid .dots i.none{ width:5px; height:5px; background:var(--wg-faint) }
+.wgc-grid .dots b{ font-size:9px; line-height:7px; color:var(--wg-muted); font-weight:700 }
+.wgc hr{ border:0; border-top:1px solid var(--wg-line); margin:2px 0 }
+.wgc h3{ margin:0 0 6px; font-size:14px; font-weight:700 }
+.wgc h3 small{ font-weight:400; color:var(--wg-muted); font-size:12px; margin-left:6px }
+.wgc-list{ gap:5px }
+.wgc-list li{ display:flex; align-items:baseline; gap:8px; font-size:13.5px; min-width:0 }
+.wgc-list li.empty{ color:var(--wg-muted) }
+.wgc-list .p{ display:inline-flex; align-items:baseline; gap:5px; white-space:nowrap }
+.wgc-list .p i{ width:8px; height:8px; border-radius:50%; background:var(--c); transform:translateY(-1px) }
+.wgc-list .t{ color:var(--wg-muted); font-size:12px; overflow-wrap:anywhere }
+.wgc-list .dt{ flex:none; width:58px; color:var(--wg-muted); font-size:12.5px; font-variant-numeric:tabular-nums }
+.wgc-list .ps{ display:flex; flex-wrap:wrap; gap:2px 10px; min-width:0 }
+.wgc-year{ display:flex; flex-direction:column; gap:6px; margin-top:4px }
+.wgc-year .bar{ display:grid; grid-template-columns:repeat(12,1fr); gap:4px }
+.wgc-year .bar span{ height:4px; border-radius:2px; background:var(--wg-faint) }
+.wgc-year .bar span.done{ background:var(--wg-fg); opacity:.75 }
+.wgc-year .bar span.now{ background:var(--wg-ring) }
+.wgc-year .yt{ display:flex; justify-content:space-between; font-size:11.5px; color:var(--wg-muted); font-variant-numeric:tabular-nums }
+.wgc-foot{ margin:0; font-size:10.5px; color:var(--wg-muted); text-align:center; opacity:.8 }
+/* 엣지 앱에서 제목 표시줄을 숨겼을 때(위젯처럼): 머리줄을 끌어서 창 이동, 창 버튼 자리 비우기 */
+@media (display-mode: window-controls-overlay){
+  body.widget .wgc{ max-width:none; border-radius:0 }
+  body.widget .wgc-top{ -webkit-app-region:drag; app-region:drag; min-height:env(titlebar-area-height,32px);
+    padding-right:calc(100vw - env(titlebar-area-x,0px) - env(titlebar-area-width,100vw) - 12px) }
+  body.widget .wgc-top button, body.widget .wgc-top a{ -webkit-app-region:no-drag; app-region:no-drag }
+}
 body.widget .card{padding:18px;gap:10px}
 body.widget .gate{padding-block:12px}
+/* 설치형 위젯 프로그램(TeamLeaveWidget.exe) 안에서 열렸을 때 */
+#appBar{display:none}
+body.app{padding-top:30px}
+body.app #appBar{display:flex;position:fixed;inset:0 0 auto 0;height:30px;z-index:50;align-items:center;justify-content:space-between;gap:8px;padding:0 6px 0 14px;background:var(--wg-bg);color:var(--wg-muted);font-size:12px;-webkit-app-region:drag;app-region:drag;user-select:none;cursor:default}
+#appBar .ab{display:flex;gap:2px;-webkit-app-region:no-drag;app-region:no-drag}
+#appBar button{width:30px;height:24px;border:0;border-radius:6px;background:none;color:var(--wg-muted);display:grid;place-items:center;font-size:15px;line-height:1}
+#appBar button:hover{background:var(--wg-sel);color:var(--wg-fg)}
+#appBar button[aria-pressed="true"]{color:var(--wg-ring);background:var(--wg-sel)}
+body.app .wgc{max-width:none;border-radius:0;padding-top:6px}
+body.app .gate{min-height:calc(100vh - 30px)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
+<div id="appBar">
+  <span>설계2실 휴가 위젯</span>
+  <span class="ab">
+    <button type="button" id="abPin" aria-pressed="false" aria-label="항상 위에 표시" title="항상 위에 표시"><svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M5.5 1.5h5l-.8 4.2 2.3 2.6v1.2H8.6V14L8 15l-.6-1V9.5H4V8.3l2.3-2.6z" fill="currentColor"/></svg></button>
+    <button type="button" id="abHide" aria-label="트레이로 숨기기" title="숨기기 (트레이 아이콘으로 다시 열기)">×</button>
+  </span>
+</div>
 
 <!-- ① 로그인 화면 -->
 <section class="gate" id="vLogin" hidden>
@@ -186,7 +287,7 @@ body.widget .gate{padding-block:12px}
       <p class="msg" id="loginMsg" role="status"></p>
       <button type="button" class="linkbtn" id="toPw">아이디로 로그인하기</button>
     </form>
-    <p class="fine">한 번 로그인하면 이 브라우저에서는 계속 로그인 상태가 유지됩니다.</p>
+    <p class="fine">한 번 로그인하면 이 브라우저에서는 계속 로그인 상태가 유지됩니다. · <a href="privacy.html" target="_blank" rel="noopener">개인정보처리방침</a></p>
   </div>
 </section>
 
@@ -238,6 +339,44 @@ body.widget .gate{padding-block:12px}
     <button type="button" id="installClose">닫기</button>
   </div>
 
+  <div class="dash">
+    <section class="panel" aria-labelledby="noticeH">
+      <div class="ph">
+        <h2 id="noticeH">팀 공지<small id="noticeCount"></small></h2>
+        <button class="ghost sm" id="noticeNew" type="button" hidden>+ 공지 쓰기</button>
+      </div>
+      <form id="noticeForm" class="nform" hidden novalidate>
+        <input id="nTitle" maxlength="80" placeholder="제목 (예: 11/20 주간회의 장소 변경)" autocomplete="off">
+        <textarea id="nBody" maxlength="2000" rows="4" placeholder="내용"></textarea>
+        <div class="nrow">
+          <label class="chk" for="nPinned"><input type="checkbox" id="nPinned"> 상단 고정</label>
+          <span class="grow"></span>
+          <button type="button" class="ghost sm" id="nCancel">취소</button>
+          <button type="submit" class="primary sm" id="nSave">올리기</button>
+        </div>
+        <p class="msg" id="nMsg" role="status"></p>
+      </form>
+      <ul id="noticeList"></ul>
+    </section>
+
+    <section class="panel" aria-labelledby="statusH">
+      <div class="ph">
+        <h2 id="statusH">오늘 근무 상태</h2>
+        <span class="ssum" id="statusSummary"></span>
+      </div>
+      <div id="stMine">
+        <div class="chips" id="stChips" role="group" aria-label="내 근무 상태"></div>
+        <div class="strow" style="margin-top:8px">
+          <input id="stNote" maxlength="40" placeholder="메모 (예: 대전 현장, 15시 복귀)" autocomplete="off">
+          <button class="primary sm" id="stSave" type="button">저장</button>
+        </div>
+        <p class="stnote" id="stInfo"></p>
+        <p class="msg" id="stMsg" role="status"></p>
+      </div>
+      <ul class="slist" id="statusList"></ul>
+    </section>
+  </div>
+
   <div class="layout">
     <section class="cal" aria-label="월간 달력">
       <div class="dow"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
@@ -284,31 +423,43 @@ body.widget .gate{padding-block:12px}
           <button class="ghost" id="renameBtn" type="button">이름·PIN 변경</button>
           <button class="ghost" id="logoutBtn" type="button">로그아웃</button>
         </div>
+        <a class="fine" href="privacy.html" target="_blank" rel="noopener" style="color:var(--muted);font-size:12px">개인정보처리방침</a>
       </section>
     </aside>
   </div>
 </div>
 
-<!-- ④ 위젯 모드 (?widget) -->
-<div class="wg" id="vWidget" hidden>
-  <header class="wg-top">
-    <div><b id="wgTitle">휴가 현황</b><span class="d" id="wgToday"></span></div>
-    <a class="wg-open" href="./" target="_blank" rel="noopener">전체 캘린더 ↗</a>
-  </header>
-  <section class="wg-sec">
-    <h3 id="wgDayTitle">오늘 부재자</h3>
-    <ul class="wg-list" id="wgDay"></ul>
-  </section>
-  <section class="wg-sec">
-    <h3>다가오는 휴가 (다음 주까지)</h3>
-    <ul class="wg-list" id="wgNext"></ul>
-  </section>
-  <section class="wg-sec">
-    <div class="wg-mhead"><button type="button" id="wgPrev" aria-label="이전 달">‹</button><span id="wgMonth"></span><button type="button" id="wgFwd" aria-label="다음 달">›</button></div>
-    <div class="wg-dow"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
-    <div class="wg-grid" id="wgGrid"></div>
-  </section>
-  <p class="wg-foot" id="wgStatus"></p>
+<!-- ④ 위젯 모드 (?widget, 바탕화면용 ?widget&wall) -->
+<div id="vWidget" hidden>
+  <div class="wgc">
+    <header class="wgc-top">
+      <div class="wgc-date"><span class="big" id="wgBig"></span><span class="sub" id="wgSub"></span></div>
+      <div class="wgc-ctl">
+        <button type="button" id="wgPrev" aria-label="이전 달">‹</button>
+        <button type="button" id="wgFwd" aria-label="다음 달">›</button>
+        <span class="sep"></span>
+        <button type="button" id="wgTheme" aria-label="밝게/어둡게 전환" title="밝게/어둡게"><svg width="15" height="15" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.8a6.2 6.2 0 0 1 0 12.4z" fill="currentColor"/></svg></button>
+        <a href="./" target="_blank" rel="noopener" aria-label="전체 캘린더 열기" title="전체 캘린더 (휴가 등록)">↗</a>
+      </div>
+    </header>
+    <a class="wgc-notice" id="wgNotice" href="./" target="_blank" rel="noopener" hidden><b>공지</b><span id="wgNoticeText"></span></a>
+    <div>
+      <div class="wgc-dow"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
+      <div class="wgc-grid" id="wgGrid"></div>
+    </div>
+    <hr>
+    <section>
+      <h3 id="wgDayTitle"></h3>
+      <ul class="wgc-list" id="wgDay"></ul>
+    </section>
+    <hr>
+    <section>
+      <h3>다가오는 휴가<small>다음 주까지</small></h3>
+      <ul class="wgc-list" id="wgNext"></ul>
+    </section>
+    <div class="wgc-year"><div class="bar" id="wgBar"></div><div class="yt"><span id="wgYear"></span><span id="wgLeft"></span></div></div>
+    <p class="wgc-foot"><span id="wgStatus"></span> · <a href="privacy.html" target="_blank" rel="noopener" style="color:inherit">개인정보처리방침</a></p>
+  </div>
 </div>
 
 <script>
@@ -330,6 +481,16 @@ body.widget .gate{padding-block:12px}
   const DEMO = !window.supabase || !/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/.test(CFG.SUPABASE_URL||"") || /YOUR-/.test(CFG.SUPABASE_ANON_KEY||"YOUR-");
   const WIDGET = /(^|[?&])widget\b/.test(location.search.slice(1)) || location.hash==="#widget";
   if(WIDGET) document.body.classList.add("widget");
+  // 설치형 위젯 프로그램 안에서 열렸는지 (WebView2 호스트)
+  const HOST = (WIDGET && window.chrome && window.chrome.webview) ? window.chrome.webview : null;
+  if(HOST){
+    document.body.classList.add("app");
+    const bar=document.getElementById("appBar"), pin=document.getElementById("abPin");
+    bar.addEventListener("mousedown",e=>{ if(e.button===0 && !e.target.closest("button")) HOST.postMessage("drag"); });
+    pin.onclick=()=>HOST.postMessage("pin");
+    document.getElementById("abHide").onclick=()=>HOST.postMessage("hide");
+    HOST.addEventListener("message",e=>{ if(typeof e.data==="string" && e.data.startsWith("pin:")) pin.setAttribute("aria-pressed", e.data==="pin:1"?"true":"false"); });
+  }
 
   const $ = id => document.getElementById(id);
   const pad = n => String(n).padStart(2,"0");
@@ -343,7 +504,9 @@ body.widget .gate{padding-block:12px}
     let n=0; for(let d=parse(start); ymd(d)<=end; d.setDate(d.getDate()+1)) if(!isOff(ymd(d))) n++;
     return n;
   }
-  function colorIdx(id){ let h=0; for(const c of String(id)) h=(h*31+c.charCodeAt(0))>>>0; return h%8; }
+  // 팀원 색: 가입 순서대로 12가지 색을 하나씩 배정 (12명까지 겹치지 않음)
+  let colorMap={};
+  function colorIdx(id){ if(id in colorMap) return colorMap[id]; let h=0; for(const c of String(id)) h=(h*31+c.charCodeAt(0))>>>0; return h%12; }
   const store = { get(k){ try{return localStorage.getItem(k);}catch{return null;} }, set(k,v){ try{localStorage.setItem(k,v);}catch{} } };
 
   function show(view){ if(view==="vApp"&&WIDGET) view="vWidget"; for(const v of ["vLogin","vName","vApp","vWidget"]) $(v).hidden = v!==view; }
@@ -392,7 +555,7 @@ body.widget .gate{padding-block:12px}
       async load(){
         const since = `${new Date().getFullYear()-1}-01-01`;
         const [m,l]=await Promise.all([
-          sb.from("members").select("id,display_name"),
+          sb.from("members").select("id,display_name,created_at").order("created_at"),
           sb.from("leaves").select("id,user_id,type,start_date,end_date,memo").gte("end_date",since).order("start_date")
         ]);
         if(m.error) throw m.error; if(l.error) throw l.error;
@@ -400,11 +563,35 @@ body.widget .gate{padding-block:12px}
       },
       async add(row){ const {error}=await sb.from("leaves").insert(row); if(error) throw error; },
       async del(id){ const {data,error}=await sb.from("leaves").delete().eq("id",id).select("id"); if(error) throw error; return (data||[]).length>0; },
+      async loadTeam(){
+        const [n,r,st]=await Promise.all([
+          sb.from("notices").select("id,author_id,title,body,pinned,created_at,updated_at").order("created_at",{ascending:false}).limit(50),
+          sb.from("notice_reads").select("notice_id,user_id"),
+          sb.from("work_status").select("user_id,status,note,status_date,updated_at")
+        ]);
+        const err=n.error||r.error||st.error; if(err) throw err;
+        return {notices:n.data, reads:r.data, statuses:st.data};
+      },
+      async saveNotice(row,id){
+        const q = id ? sb.from("notices").update({...row, updated_at:new Date().toISOString()}).eq("id",id).select("id")
+                     : sb.from("notices").insert(row).select("id");
+        const {data,error}=await q; if(error) throw error; if(!data||!data.length) throw {code:"denied"};
+        return data[0].id;
+      },
+      async deleteNotice(id){ const {data,error}=await sb.from("notices").delete().eq("id",id).select("id"); if(error) throw error; return (data||[]).length>0; },
+      async markRead(id,uid){ const {error}=await sb.from("notice_reads").upsert({notice_id:id,user_id:uid},{onConflict:"notice_id,user_id",ignoreDuplicates:true}); if(error) throw error; },
+      async setStatus(uid,status,note,date){
+        const {error}=await sb.from("work_status").upsert({user_id:uid,status,note:note||null,status_date:date,updated_at:new Date().toISOString()},{onConflict:"user_id"});
+        if(error) throw error;
+      },
       live(cb){
         let t; const fire=()=>{ clearTimeout(t); t=setTimeout(cb,250); };
         sb.channel("team-leave")
           .on("postgres_changes",{event:"*",schema:"public",table:"leaves"},fire)
           .on("postgres_changes",{event:"*",schema:"public",table:"members"},fire)
+          .on("postgres_changes",{event:"*",schema:"public",table:"notices"},fire)
+          .on("postgres_changes",{event:"*",schema:"public",table:"notice_reads"},fire)
+          .on("postgres_changes",{event:"*",schema:"public",table:"work_status"},fire)
           .subscribe();
         document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="visible") fire(); });
       }
@@ -423,6 +610,13 @@ body.widget .gate{padding-block:12px}
       {id:"x5",user_id:"demo-b",type:"연차",start_date:d(24),end_date:d(26),memo:""}
     ];
     let user=null, cb=null, demoPw=null;
+    const nowIso=new Date().toISOString(), td=ymd(new Date());
+    let notices=[
+      {id:"n1",author_id:"demo-a",title:"(예시) 연말 휴가는 12/10까지 등록해 주세요",body:"연차 사용 계획을 12월 10일까지 캘린더에 등록해 주세요.\n반차는 오전/오후를 구분해 주세요.",pinned:true,created_at:nowIso,updated_at:nowIso},
+      {id:"n2",author_id:"demo-b",title:"(예시) 다음 주 화요일 주간회의는 10시로 변경",body:"회의실 3층 대회의실",pinned:false,created_at:nowIso,updated_at:nowIso}
+    ];
+    let reads=[{notice_id:"n2",user_id:"demo-a"}];
+    let statuses=[{user_id:"demo-a",status:"현장",note:"(예시) 대전 현장, 15시 복귀",status_date:td,updated_at:nowIso},{user_id:"demo-c",status:"재택",note:"",status_date:td,updated_at:nowIso}];
     members[1].login_id="김설계";
     return {
       async session(){ return user; },
@@ -434,8 +628,13 @@ body.widget .gate{padding-block:12px}
       async myProfile(){ return {display_name:members[0].display_name, login_id:members[0].login_id}; },
       async saveProfile(uid,name,loginId){ if(members.some(m=>m.id!=="demo-me"&&m.login_id&&m.login_id.toLowerCase()===loginId.toLowerCase())) throw {code:"dupId"}; members[0].display_name=name; members[0].login_id=loginId; },
       async setPassword(pw){ demoPw=pw; user={...user,user_metadata:{pin_set:true}}; return user; },
-      async isAdmin(){ return false; },
+      async isAdmin(){ return true; },
       async load(){ return {members:members.map(x=>({...x})), leaves:leaves.map(x=>({...x}))}; },
+      async loadTeam(){ return {notices:notices.map(x=>({...x})), reads:reads.map(x=>({...x})), statuses:statuses.map(x=>({...x}))}; },
+      async saveNotice(row,id){ if(id){ Object.assign(notices.find(n=>n.id===id),row,{updated_at:new Date().toISOString()}); } else { const id="n"+Date.now(); notices.unshift({id,author_id:"demo-me",created_at:new Date().toISOString(),updated_at:new Date().toISOString(),...row}); return id; } return id; },
+      async deleteNotice(id){ notices=notices.filter(n=>n.id!==id); return true; },
+      async markRead(id,uid){ if(!reads.some(r=>r.notice_id===id&&r.user_id===uid)) reads.push({notice_id:id,user_id:uid}); },
+      async setStatus(uid,status,note,date){ statuses=statuses.filter(x=>x.user_id!==uid); statuses.push({user_id:uid,status,note:note||null,status_date:date,updated_at:new Date().toISOString()}); },
       async add(row){ leaves.push({id:"n"+Date.now(), user_id:"demo-me", memo:"", ...row}); },
       async del(id){ const r=leaves.find(x=>x.id===id); if(!r||r.user_id!=="demo-me") return false; leaves=leaves.filter(x=>x.id!==id); return true; },
       live(){}
@@ -550,23 +749,49 @@ body.widget .gate{padding-block:12px}
 
   // ---------------- 위젯 모드 ----------------
   let wgView=new Date(); wgView.setDate(1); let wgSel=null;
-  function wgItem(e,withDate){
-    const li=document.createElement("li"); li.style.setProperty("--c",e.c);
-    li.append(document.createElement("i"));
-    const nm=document.createElement("span"); nm.className="nm"; nm.textContent=e.who; li.append(nm);
-    const t=document.createElement("span"); t.className="t"; t.textContent=e.type+(e.memo?` · ${e.memo}`:""); li.append(t);
-    return li;
+  function wgPerson(e,withType){
+    const sp=document.createElement("span"); sp.className="p"; sp.style.setProperty("--c",e.c);
+    sp.append(document.createElement("i"), document.createTextNode(e.who + (withType && e.type!=="연차" ? `(${e.type})` : "")));
+    return sp;
   }
   function renderWidget(list){
     const sel=wgSel||today, d0=parse(today);
-    $("wgToday").textContent=`${d0.getMonth()+1}/${d0.getDate()}(${DOW[d0.getDay()]})`;
-    // 선택한 날(기본 오늘) 부재자
+    const y=wgView.getFullYear(), m=wgView.getMonth();
+    $("wgBig").textContent=d0.getDate();
+    $("wgSub").textContent=`${y}년 ${m+1}월`;
+    // 미니 달력: 날짜 아래 사람별 색 점
+    const first=new Date(y,m,1), start=new Date(first); start.setDate(1-first.getDay());
+    const weeks=Math.ceil((first.getDay()+new Date(y,m+1,0).getDate())/7);
+    const g=$("wgGrid"); g.replaceChildren();
+    for(let i=0;i<weeks*7;i++){
+      const d=new Date(start); d.setDate(start.getDate()+i); const s=ymd(d);
+      const b=document.createElement("button"); b.type="button";
+      if(d.getMonth()!==m){ b.className="out"; b.tabIndex=-1; g.append(b); continue; }
+      if(d.getDay()===0) b.classList.add("sun"); if(d.getDay()===6) b.classList.add("sat"); if(HOLIDAYS[s]) b.classList.add("hol");
+      if(s===today) b.classList.add("today"); if(s===sel) b.classList.add("sel");
+      const n=document.createElement("span"); n.className="n"; n.textContent=d.getDate();
+      const dots=document.createElement("span"); dots.className="dots";
+      const es=onDay(list,s);
+      if(es.length){
+        const shown=es.length>4?es.slice(0,3):es;
+        for(const e of shown){ const i=document.createElement("i"); if(HALF.has(e.type)) i.className="half"; i.style.setProperty("--c",e.c); dots.append(i); }
+        if(es.length>4){ const more=document.createElement("b"); more.textContent=`+${es.length-3}`; dots.append(more); }
+      } else if(!isOff(s)){ const i=document.createElement("i"); i.className="none"; dots.append(i); }
+      b.append(n,dots);
+      b.title=`${d.getMonth()+1}/${d.getDate()}${HOLIDAYS[s]?" "+HOLIDAYS[s]:""}`+(es.length?" · "+es.map(e=>e.who+" "+e.type).join(", "):"");
+      b.addEventListener("click",()=>{ wgSel = s===today?null:s; renderWidget(entries()); });
+      g.append(b);
+    }
+    // 선택한 날 부재자
     const sd=parse(sel);
-    $("wgDayTitle").textContent = sel===today ? "오늘 부재자" : `${sd.getMonth()+1}/${sd.getDate()}(${DOW[sd.getDay()]}) 부재자`;
+    $("wgDayTitle").textContent=`${sd.getMonth()+1}.${pad(sd.getDate())} ${DOW[sd.getDay()]}${sel===today?" · 오늘":""}${HOLIDAYS[sel]?" · "+HOLIDAYS[sel]:""}`;
     const ul=$("wgDay"); ul.replaceChildren();
     const es=onDay(list,sel);
-    if(!es.length){ const li=document.createElement("li"); li.className="t"; li.textContent=isOff(sel)?(HOLIDAYS[sel]||"휴무일")+"입니다.":"모두 출근합니다."; ul.append(li); }
-    else es.forEach(e=>ul.append(wgItem(e)));
+    if(!es.length){ const li=document.createElement("li"); li.className="empty"; li.textContent=isOff(sel)?"휴무일":"모두 출근"; ul.append(li); }
+    else for(const e of es){
+      const li=document.createElement("li"); li.append(wgPerson(e,false));
+      const t=document.createElement("span"); t.className="t"; t.textContent=e.type+(e.memo?` · ${e.memo}`:""); li.append(t); ul.append(li);
+    }
     // 내일 ~ 다음 주 일요일
     const nx=$("wgNext"); nx.replaceChildren();
     const end=parse(today); end.setDate(end.getDate()+(7-end.getDay())+7);
@@ -575,43 +800,198 @@ body.widget .gate{padding-block:12px}
       const s=ymd(d); if(isOff(s)) continue;
       const day=onDay(list,s); if(!day.length) continue;
       const li=document.createElement("li");
-      const dt=document.createElement("span"); dt.className="dt"; dt.textContent=`${d.getMonth()+1}/${d.getDate()}(${DOW[d.getDay()]})`;
-      const nm=document.createElement("span"); nm.className="nm"; nm.textContent=day.map(e=>`${e.who}${e.type==="연차"?"":"("+e.type+")"}`).join(", ");
-      li.append(dt,nm); nx.append(li); cnt++;
+      const dt=document.createElement("span"); dt.className="dt"; dt.textContent=`${d.getMonth()+1}/${d.getDate()} ${DOW[d.getDay()]}`;
+      const ps=document.createElement("span"); ps.className="ps"; day.forEach(e=>ps.append(wgPerson(e,true)));
+      li.append(dt,ps); nx.append(li); cnt++;
     }
-    if(!cnt){ const li=document.createElement("li"); li.className="t"; li.textContent="다음 주까지 예정된 휴가가 없습니다."; nx.append(li); }
-    // 미니 달력
-    const y=wgView.getFullYear(), m=wgView.getMonth();
-    $("wgMonth").textContent=`${y}년 ${m+1}월`;
-    const first=new Date(y,m,1), start=new Date(first); start.setDate(1-first.getDay());
-    const weeks=Math.ceil((first.getDay()+new Date(y,m+1,0).getDate())/7);
-    const g=$("wgGrid"); g.replaceChildren();
-    for(let i=0;i<weeks*7;i++){
-      const d=new Date(start); d.setDate(start.getDate()+i); const s=ymd(d);
-      const b=document.createElement("button"); b.type="button"; b.textContent=d.getDate();
-      if(d.getMonth()!==m) b.classList.add("out");
-      if(d.getDay()===0) b.classList.add("sun"); if(d.getDay()===6) b.classList.add("sat"); if(HOLIDAYS[s]) b.classList.add("hol");
-      if(s===today) b.classList.add("today"); if(s===sel) b.classList.add("sel");
-      const n=onDay(list,s).length; if(n) b.classList.add("has");
-      b.title=`${d.getMonth()+1}/${d.getDate()}${HOLIDAYS[s]?" "+HOLIDAYS[s]:""} · 부재 ${n}명`;
-      b.addEventListener("click",()=>{ wgSel = s===today?null:s; renderWidget(entries()); });
-      g.append(b);
-    }
+    if(!cnt){ const li=document.createElement("li"); li.className="empty"; li.textContent="예정된 휴가가 없습니다."; nx.append(li); }
+    // 연간 진행 막대
+    const Y=d0.getFullYear(), doy=Math.round((d0-new Date(Y,0,1))/864e5)+1, total=Math.round((new Date(Y+1,0,1)-new Date(Y,0,1))/864e5);
+    const bar=$("wgBar"); bar.replaceChildren();
+    for(let k=0;k<12;k++){ const sp=document.createElement("span"); if(k<d0.getMonth()) sp.className="done"; else if(k===d0.getMonth()) sp.className="now"; bar.append(sp); }
+    $("wgYear").textContent=`${Y} · ${doy}일째`; $("wgLeft").textContent=`남은 ${total-doy}일`;
     const now=new Date();
-    $("wgStatus").textContent=`${pad(now.getHours())}:${pad(now.getMinutes())} 기준 · 변경 시 자동 반영${DEMO?" · 데모":""}`;
+    $("wgStatus").textContent=`${pad(now.getHours())}:${pad(now.getMinutes())} 갱신 · 변경 시 자동 반영${DEMO?" · 데모":""}`;
   }
   $("wgPrev").onclick=()=>{ wgView.setMonth(wgView.getMonth()-1); renderWidget(entries()); };
   $("wgFwd").onclick=()=>{ wgView.setMonth(wgView.getMonth()+1); renderWidget(entries()); };
+  function wgApplyTheme(t){
+    document.body.classList.toggle("wg-light",t==="light"); document.body.classList.toggle("wg-dark",t==="dark");
+    if(HOST) HOST.postMessage("theme:" + (t==="dark"||t==="light" ? t : (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")));
+  }
+  $("wgTheme").onclick=()=>{
+    const cur = document.body.classList.contains("wg-dark") ? "dark" : document.body.classList.contains("wg-light") ? "light"
+      : (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    const nt = cur==="dark" ? "light" : "dark"; wgApplyTheme(nt); store.set("tl-wg-theme",nt);
+  };
+  if(WIDGET){
+    wgApplyTheme(store.get("tl-wg-theme"));
+    const q=new URLSearchParams(location.search);
+    if(q.has("wall")){
+      document.body.classList.add("wall");
+      if(q.get("pos")==="left") document.body.classList.add("pos-left");
+      const z=parseFloat(q.get("zoom")); if(z>=0.6&&z<=3) document.body.style.setProperty("--wall-zoom",z);
+      const top=parseInt(q.get("top"),10); if(top>=0&&top<=2000) document.body.style.setProperty("--wall-top",top+"px");
+      const side=parseInt(q.get("side"),10); if(side>=0&&side<=3000) document.body.style.setProperty("--wall-side",side+"px");
+      const bg=q.get("bg"); if(bg&&/^[0-9a-fA-F]{6}$/.test(bg)) document.body.style.setProperty("--wall","#"+bg);
+    }
+  }
+
+  // ---------------- 팀 공지 · 근무 상태 ----------------
+  let team={notices:[],reads:[],statuses:[]}, teamReady=false, noticeOpen=new Set(), noticeAll=false, editingNotice=null, stPick=null, stDirty=false;
+  const ST=["사무실","재택","외근","현장","출장","회의","교육"];
+  const ST_C={"사무실":"var(--m2)","재택":"var(--m0)","외근":"var(--m1)","현장":"var(--m5)","출장":"var(--m4)","회의":"var(--m7)","교육":"var(--m3)","휴가":"var(--m6)"};
+  const isoDay = iso => ymd(new Date(iso));
+  function whenText(iso){ const d=new Date(iso); return isoDay(iso)===today ? `오늘 ${pad(d.getHours())}:${pad(d.getMinutes())}` : `${d.getMonth()+1}/${d.getDate()}`; }
+  function myReadSet(){ return new Set(team.reads.filter(r=>r.user_id===me?.id).map(r=>r.notice_id)); }
+  function sortedNotices(){ return [...team.notices].sort((a,b)=>(b.pinned-a.pinned)||(a.created_at<b.created_at?1:-1)); }
+
+  function renderDash(){
+    if(WIDGET){ renderWidgetNotice(); return; }
+    $("noticeNew").hidden = !(admin && teamReady);
+    renderNotices(); renderStatus();
+  }
+
+  function renderNotices(){
+    const ul=$("noticeList"); ul.replaceChildren();
+    if(!teamReady){ const li=document.createElement("li"); li.className="empty"; li.textContent="공지 기능을 쓰려면 관리자가 Supabase에서 '공지·근무상태' SQL을 한 번 실행해야 합니다."; ul.append(li); $("noticeCount").textContent=""; return; }
+    const reads=myReadSet(), list=sortedNotices();
+    const unread=list.filter(n=>!reads.has(n.id)).length;
+    $("noticeCount").textContent = unread ? `새 글 ${unread}` : "";
+    if(!list.length){ const li=document.createElement("li"); li.className="empty"; li.textContent = admin ? "아직 공지가 없습니다. 오른쪽 위 [+ 공지 쓰기]로 첫 공지를 올려 보세요." : "아직 등록된 공지가 없습니다."; ul.append(li); return; }
+    const memberCount=Object.keys(members).filter(k=>members[k]).length;
+    (noticeAll?list:list.slice(0,4)).forEach(n=>{
+      const open=noticeOpen.has(n.id);
+      const li=document.createElement("li"); li.className="nwrap"+(open?" open":"");
+      const head=document.createElement("button"); head.type="button"; head.className="nhead"; head.setAttribute("aria-expanded",open?"true":"false");
+      const top=document.createElement("span"); top.className="ntop";
+      if(n.pinned){ const b=document.createElement("span"); b.className="pinb"; b.textContent="고정"; top.append(b); }
+      if(!reads.has(n.id)){ const d=document.createElement("span"); d.className="newd"; d.title="새 글"; top.append(d); }
+      const t=document.createElement("span"); t.className="ntitle"; t.textContent=n.title; top.append(t);
+      const meta=document.createElement("span"); meta.className="nmeta";
+      const rc=team.reads.filter(r=>r.notice_id===n.id).length;
+      meta.textContent=`${members[n.author_id]||"관리자"} · ${whenText(n.created_at)}${n.updated_at&&isoDay(n.updated_at)!==isoDay(n.created_at)?" (수정됨)":""}${admin?` · 읽음 ${rc}/${memberCount}`:""}`;
+      head.append(top,meta);
+      head.addEventListener("click",async()=>{
+        if(noticeOpen.has(n.id)) noticeOpen.delete(n.id); else noticeOpen.add(n.id);
+        renderNotices();
+        if(!reads.has(n.id) && me){ try{ await api.markRead(n.id,me.id); team.reads.push({notice_id:n.id,user_id:me.id}); renderDash(); }catch(e){} }
+      });
+      li.append(head);
+      if(open){
+        if(n.body){ const b=document.createElement("div"); b.className="nbody"; b.textContent=n.body; li.append(b); }
+        if(admin){
+          const act=document.createElement("div"); act.className="nact";
+          const ed=document.createElement("button"); ed.type="button"; ed.className="ghost sm"; ed.textContent="수정";
+          ed.onclick=()=>openNoticeForm(n);
+          const del=document.createElement("button"); del.type="button"; del.className="del"; del.textContent="삭제";
+          del.onclick=async()=>{
+            if(!del.classList.contains("arm")){ del.classList.add("arm"); del.textContent="삭제 확인"; setTimeout(()=>{ del.classList.remove("arm"); del.textContent="삭제"; },3000); return; }
+            del.disabled=true; try{ await api.deleteNotice(n.id); noticeOpen.delete(n.id); await refresh(); }catch(e){ del.disabled=false; msg($("nMsg"),"삭제하지 못했습니다.","err"); }
+          };
+          act.append(ed,del); li.append(act);
+        }
+      }
+      ul.append(li);
+    });
+    if(list.length>4){
+      const li=document.createElement("li"); const mb=document.createElement("button"); mb.type="button"; mb.className="nmore";
+      mb.textContent = noticeAll ? "접기" : `공지 전체 보기 (${list.length})`;
+      mb.onclick=()=>{ noticeAll=!noticeAll; renderNotices(); }; li.append(mb); ul.append(li);
+    }
+  }
+
+  function openNoticeForm(n){
+    editingNotice = n ? n.id : null;
+    $("nTitle").value = n ? n.title : ""; $("nBody").value = n ? n.body : ""; $("nPinned").checked = n ? !!n.pinned : false;
+    $("nSave").textContent = n ? "수정 저장" : "올리기"; msg($("nMsg"),"");
+    $("noticeForm").hidden=false; $("noticeNew").hidden=true; $("nTitle").focus();
+  }
+  function closeNoticeForm(){ $("noticeForm").hidden=true; editingNotice=null; $("noticeNew").hidden=!(admin&&teamReady); }
+  $("noticeNew").onclick=()=>openNoticeForm(null);
+  $("nCancel").onclick=closeNoticeForm;
+  $("noticeForm").addEventListener("submit",async ev=>{
+    ev.preventDefault();
+    const title=$("nTitle").value.trim(), body=$("nBody").value.trim(), pinned=$("nPinned").checked;
+    if(!title) return msg($("nMsg"),"제목을 입력하세요.","err");
+    $("nSave").disabled=true; msg($("nMsg"),"저장 중…");
+    try{ const nid=await api.saveNotice({title,body,pinned}, editingNotice); if(nid&&me) await api.markRead(nid,me.id).catch(()=>{}); closeNoticeForm(); await refresh(); }
+    catch(e){ msg($("nMsg"), e&&e.code==="denied" ? "공지는 관리자만 올리거나 고칠 수 있습니다." : "저장하지 못했습니다. 잠시 후 다시 시도해 주세요.","err"); }
+    finally{ $("nSave").disabled=false; }
+  });
+
+  function todayStatuses(){ const m={}; team.statuses.forEach(x=>{ if(x.status_date===today) m[x.user_id]=x; }); return m; }
+  function renderStatus(){
+    const ul=$("statusList"); ul.replaceChildren();
+    $("stMine").hidden=!teamReady;
+    if(!teamReady){ const li=document.createElement("li"); li.className="empty"; li.textContent="근무 상태 기능을 쓰려면 관리자가 Supabase에서 '공지·근무상태' SQL을 한 번 실행해야 합니다."; ul.append(li); $("statusSummary").textContent=""; return; }
+    const tm=todayStatuses(), leaveT={}; onDay(entries(),today).forEach(e=>{ if(!leaveT[e.uid]) leaveT[e.uid]=e; });
+    // 내 상태 선택
+    const mine=tm[me?.id], cur = stPick ?? mine?.status ?? null;
+    const chips=$("stChips"); chips.replaceChildren();
+    ST.forEach(st=>{
+      const b=document.createElement("button"); b.type="button"; b.className="stchip"; b.style.setProperty("--sc",ST_C[st]);
+      b.setAttribute("aria-pressed", cur===st?"true":"false");
+      b.append(document.createElement("i"), document.createTextNode(st));
+      b.onclick=()=>{ stPick=st; renderStatus(); };
+      chips.append(b);
+    });
+    if(!stDirty && document.activeElement!==$("stNote")) $("stNote").value = mine?.note || "";
+    $("stInfo").textContent = leaveT[me?.id] ? `오늘은 휴가(${leaveT[me.id].type})로 등록되어 있어 팀원들에게 '휴가'로 보입니다.` : (mine ? `오늘 ${whenText(mine.updated_at).replace("오늘 ","")}에 저장됨 · 매일 처음 한 번 바꿔 주세요.` : "오늘 상태를 아직 정하지 않았습니다. 하나를 고르고 저장하세요.");
+    // 팀원 목록
+    const ids=Object.keys(members).filter(id=>members[id]);
+    const rowOf=id=>{
+      if(leaveT[id]) return {st:"휴가", note:leaveT[id].type+(leaveT[id].memo?` · ${leaveT[id].memo}`:""), tm:""};
+      if(tm[id]) return {st:tm[id].status, note:tm[id].note||"", tm:whenText(tm[id].updated_at).replace("오늘 ","")};
+      return {st:null, note:"", tm:""};
+    };
+    const order=[...ST,"휴가"];
+    ids.sort((a,b)=>{ const ra=rowOf(a), rb=rowOf(b); const ia=ra.st?order.indexOf(ra.st):99, ib=rb.st?order.indexOf(rb.st):99; return ia-ib || members[a].localeCompare(members[b],"ko"); });
+    const cnt={};
+    ids.forEach(id=>{
+      const r=rowOf(id); cnt[r.st||"미입력"]=(cnt[r.st||"미입력"]||0)+1;
+      const li=document.createElement("li");
+      const dot=document.createElement("span"); dot.className="dot"; dot.style.setProperty("--c",`var(--m${colorIdx(id)})`);
+      const nm=document.createElement("span"); nm.className="nm"; nm.textContent=members[id]+(id===me?.id?" (나)":"");
+      const pill=document.createElement("span"); pill.className="pill"+(r.st?"":" none"); if(r.st) pill.style.setProperty("--sc",ST_C[r.st]); pill.textContent=r.st||"미입력";
+      const note=document.createElement("span"); note.className="note"; note.textContent=r.note;
+      const t=document.createElement("span"); t.className="tm"; t.textContent=r.tm;
+      li.append(dot,nm,pill,note,t); ul.append(li);
+    });
+    $("statusSummary").textContent=[...order,"미입력"].filter(k=>cnt[k]).map(k=>`${k} ${cnt[k]}`).join(" · ");
+  }
+  $("stNote").addEventListener("input",()=>{ stDirty=true; });
+  $("stSave").onclick=async()=>{
+    const mine=todayStatuses()[me?.id], st=stPick ?? mine?.status;
+    if(!st) return msg($("stMsg"),"근무 상태를 하나 고르세요.","err");
+    $("stSave").disabled=true; msg($("stMsg"),"저장 중…");
+    try{ await api.setStatus(me.id, st, $("stNote").value.trim(), today); stPick=null; stDirty=false; msg($("stMsg"),`'${st}'(으)로 저장했습니다.`,"ok"); await refresh(); }
+    catch(e){ msg($("stMsg"),"저장하지 못했습니다. 잠시 후 다시 시도해 주세요.","err"); }
+    finally{ $("stSave").disabled=false; }
+  };
+
+  function renderWidgetNotice(){
+    const a=$("wgNotice");
+    if(!teamReady || !team.notices.length){ a.hidden=true; return; }
+    const reads=myReadSet(), list=sortedNotices();
+    const pick=list.find(n=>!reads.has(n.id)) || list.find(n=>n.pinned);
+    if(!pick){ a.hidden=true; return; }
+    $("wgNoticeText").textContent=pick.title;
+    a.querySelector("i")?.remove(); if(!reads.has(pick.id)) a.append(document.createElement("i"));
+    a.title=pick.title+(pick.body?"\n\n"+pick.body:""); a.hidden=false;
+  }
 
   async function refresh(){
     try{
       const data=await api.load();
-      members={}; for(const m of data.members) members[m.id]=m.display_name;
+      members={}; colorMap={}; data.members.forEach((m,i)=>{ members[m.id]=m.display_name; colorMap[m.id]=i%12; });
       leaves=data.leaves;
       const n=new Set(leaves.map(l=>l.user_id)).size;
       status(`${DEMO?"데모 모드 · 저장되지 않음 · ":""}팀원 ${Object.keys(members).filter(k=>members[k]).length}명 · 휴가 등록자 ${n}명${admin?" · 관리자: 모든 일정 삭제 가능":""}`, DEMO);
       today = ymd(new Date());
+      try{ team=await api.loadTeam(); teamReady=true; }catch(e){ teamReady=false; }
       render();
+      renderDash();
       if(WIDGET) renderWidget(entries());
     }catch(e){
       if(WIDGET) $("wgStatus").textContent="일정을 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.";
@@ -766,7 +1146,7 @@ body.widget .gate{padding-block:12px}
 
   // ---------------- 시작 ----------------
   (async()=>{
-    if(CFG.TEAM_NAME){ $("loginTeam").textContent=`${CFG.TEAM_NAME} · 팀 휴가 캘린더`; $("appTitle").textContent=`${CFG.TEAM_NAME} 휴가 캘린더`; document.title=`${CFG.TEAM_NAME} 휴가 캘린더`; $("wgTitle").textContent=`${CFG.TEAM_NAME} 휴가 현황`; if(WIDGET) document.title=`${CFG.TEAM_NAME} 휴가 위젯`; }
+    if(CFG.TEAM_NAME){ $("loginTeam").textContent=`${CFG.TEAM_NAME} · 팀 휴가 캘린더`; $("appTitle").textContent=`${CFG.TEAM_NAME} 휴가 캘린더`; document.title=`${CFG.TEAM_NAME} 휴가 캘린더`; if(WIDGET) document.title=`${CFG.TEAM_NAME} 휴가 위젯`; }
     $("demoNote").hidden=!DEMO;
     // 메일 링크가 만료됐을 때 Supabase가 주소에 붙여주는 오류 처리
     const hp=new URLSearchParams(location.hash.slice(1)+"&"+location.search.slice(1));
